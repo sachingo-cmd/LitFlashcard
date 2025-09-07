@@ -4,8 +4,17 @@
   <title>Author Flashcards</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body { font-family: Arial, sans-serif; background: #f0f0f0; margin: 0; padding: 0; }
-    header { padding: 10px 20px; background: #3979c2; color: white; text-align: center; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+      margin: 0; padding: 0;
+    }
+    header {
+      padding: 10px 20px;
+      background: #3979c2;
+      color: white;
+      text-align: center;
+    }
     .container {
       display: flex;
       flex-wrap: wrap;
@@ -16,12 +25,14 @@
     .flip-card {
       background: transparent;
       width: 250px;
-      height: auto;
+      height: 320px; /* fixed base height */
       cursor: pointer;
       border-radius: 12px;
       transition: all 0.3s ease;
       box-sizing: border-box;
       margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
     }
     .flip-card-inner {
       position: relative;
@@ -33,56 +44,68 @@
       box-shadow: 2px 2px 12px #bbb;
       border: 1px solid #aaa;
       box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
     .flip-card.flipped .flip-card-inner {
       transform: rotateY(180deg);
     }
     .flip-card.expanded {
-      width: 250px;
-      height: auto;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+      height: 420px; /* larger height on flip */
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    }
+    .flip-card.expanded .flip-card-inner {
+      height: 100%;
     }
     .flip-card-front, .flip-card-back {
-      position: relative;
+      position: absolute;
       width: 100%;
-      height: auto;
+      height: 100%;
       backface-visibility: hidden;
+      border-radius: 12px;
+      box-sizing: border-box;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      border-radius: 12px;
-      font-size: 16px;
       padding: 0;
-      box-sizing: border-box;
-      overflow: hidden;
     }
+
     .flip-card-front {
       background: #fff;
+      position: relative;
+      justify-content: flex-start;
       border-radius: 12px 12px 0 0;
+      overflow: hidden;
     }
     .flip-card-front img {
       width: 100%;
       height: 250px;
+      object-fit: contain; /* prevent cropping */
       border-radius: 12px 12px 0 0;
-      object-fit: cover;
-      margin-bottom: 0;
+      user-select: none;
     }
     .flip-card-back {
       background: #e6f3ff;
       transform: rotateY(180deg);
-      text-align: center;
-      line-height: 1.4;
-      max-height: 300px;
+      text-align: left;
+      padding: 16px 20px;
       overflow-y: auto;
-      padding: 20px 16px;
-      box-sizing: border-box;
-      border-radius: 0 0 12px 12px;
-      height: auto;
+      overflow-x: hidden;
+      height: 100%;
+      justify-content: flex-start; /* start from top */
+      color: #333;
     }
-    .flip-card-back strong, .flip-card-back small {
+    .flip-card-back strong {
       display: block;
-      margin: 0 0 8px;
+      margin-bottom: 12px;
+      font-size: 20px;
+    }
+    .flip-card-back small {
+      display: block;
+      white-space: pre-wrap; /* preserve line breaks */
+      font-size: 16px;
+      line-height: 1.4;
     }
     button {
       margin: 12px;
@@ -102,17 +125,13 @@
     @media (max-width: 600px) {
       .flip-card {
         width: 200px;
-        margin-bottom: 14px;
+        height: 270px;
+      }
+      .flip-card.expanded {
+        height: 360px;
       }
       .flip-card-front img {
         height: 180px;
-      }
-      .flip-card.expanded {
-        width: 200px;
-      }
-      .flip-card-back {
-        max-height: 220px;
-        padding: 18px 14px;
       }
     }
   </style>
@@ -235,10 +254,6 @@
     document.addEventListener('DOMContentLoaded', () => {
       const cached = loadCachedCards();
       if (cached.length > 0) renderCards(cached);
-      else {
-        // Uncomment this to auto-load full data on first load
-        // loadFullData();
-      }
     });
   </script>
 </body>
