@@ -9,14 +9,18 @@
     .container { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; margin: 20px; }
     .flip-card {
       background: transparent;
-      width: 150px; height: 180px;
+      width: 180px;
+      height: 240px;
       perspective: 800px;
       cursor: pointer;
       border-radius: 12px;
+      transition: width 0.3s ease, height 0.3s ease;
+      position: relative;
     }
     .flip-card-inner {
       position: relative;
-      width: 100%; height: 100%;
+      width: 100%;
+      height: 100%;
       transition: transform 0.6s;
       transform-style: preserve-3d;
       border-radius: 12px;
@@ -28,29 +32,46 @@
     }
     .flip-card-front, .flip-card-back {
       position: absolute;
-      width: 100%; height: 100%;
+      width: 100%;
+      height: 100%;
       backface-visibility: hidden;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       border-radius: 12px;
       font-size: 16px;
-      padding: 5px 10px;
+      padding: 10px 14px;
       box-sizing: border-box;
+      overflow: hidden;
     }
     .flip-card-front {
       background: #fff;
     }
     .flip-card-front img {
-      max-width: 80px;
-      max-height: 90px;
+      max-width: 140px;
+      max-height: 140px;
       border-radius: 8px;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
+      object-fit: contain;
     }
     .flip-card-back {
       background: #e6f3ff;
       transform: rotateY(180deg);
       text-align: center;
-      line-height: 1.2;
+      line-height: 1.4;
+      overflow-y: auto;
+      max-height: 220px;
+    }
+    /* Enlarge card and allow dynamic height when flipped */
+    .flip-card.expanded {
+      width: 320px;
+      height: auto;
+      z-index: 10;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+    }
+    .flip-card.expanded .flip-card-inner {
+      height: auto;
     }
     button {
       margin: 12px;
@@ -68,11 +89,20 @@
       background: #295595;
     }
     @media (max-width: 600px) {
-      .flip-card { width: 120px; height: 150px; }
-      .flip-card-front img { max-width: 60px; max-height: 70px; }
+      .flip-card {
+        width: 140px;
+        height: 180px;
+      }
+      .flip-card-front img {
+        max-width: 100px;
+        max-height: 100px;
+      }
+      .flip-card.expanded {
+        width: 280px;
+      }
     }
   </style>
-  <!-- Added PapaParse Library -->
+  <!-- PapaParse Library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 </head>
 <body>
@@ -89,19 +119,18 @@
     const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT7cWnraaDNjm3MW4tUeVrVftj6iEBYwNkGZ7WsJsQfte3rbRhr1AF43fbIyVe1-ZMtvRVZgDrwusrT/pub?output=csv';
     const STORAGE_KEY = 'authorFlashcardsCache';
 
-    // Use PapaParse to correctly parse CSV including quotes and commas in fields
     function csvToObjects(csv) {
-      const result = Papa.parse(csv, {
-        header: true,
-        skipEmptyLines: true
-      });
+      const result = Papa.parse(csv, { header: true, skipEmptyLines: true });
       return result.data;
     }
 
     function renderCard(data) {
       const card = document.createElement('div');
       card.className = 'flip-card';
-      card.onclick = () => card.classList.toggle('flipped');
+      card.onclick = () => {
+        card.classList.toggle('flipped');
+        card.classList.toggle('expanded');
+      };
       card.dataset.id = data.id;
       card.innerHTML = `
         <div class="flip-card-inner">
@@ -110,7 +139,7 @@
           </div>
           <div class="flip-card-back">
             <strong>${data.AuthorName}</strong><br>
-            <small>${data['Works/Description'] || ''}</small>
+            <small>${data["Works/Description"] || ''}</small>
           </div>
         </div>
       `;
@@ -118,7 +147,7 @@
     }
 
     function loadCachedCards() {
-      let data = localStorage.getItem(STORAGE_KEY);
+      const data = localStorage.getItem(STORAGE_KEY);
       if (!data) return [];
       try {
         return JSON.parse(data);
@@ -142,6 +171,7 @@
     function resetCards() {
       document.querySelectorAll('.flip-card').forEach(card => {
         card.classList.remove('flipped');
+        card.classList.remove('expanded');
       });
       alert('All cards flipped to front.');
     }
@@ -150,11 +180,12 @@
       try {
         const response = await fetch(CSV_URL);
         const csvText = await response.text();
-        const allData = csvToObjects(csvText).map(item => ({
+        let allData = csvToObjects(csvText);
+        allData = allData.map(item => ({
           id: Number(item.id),
           ImageURL: item.ImageURL,
           AuthorName: item.AuthorName,
-          "Works/Description": item["Works/Description"] // Important to keep exact property name here
+          "Works/Description": item["Works/Description"] || ''
         }));
         saveCardsToCache(allData);
         renderCards(allData);
@@ -170,11 +201,12 @@
       try {
         const response = await fetch(CSV_URL);
         const csvText = await response.text();
-        const allData = csvToObjects(csvText).map(item => ({
+        let allData = csvToObjects(csvText);
+        allData = allData.map(item => ({
           id: Number(item.id),
           ImageURL: item.ImageURL,
           AuthorName: item.AuthorName,
-          "Works/Description": item["Works/Description"]
+          "Works/Description": item["Works/Description"] || ''
         }));
         const newData = allData.filter(item => item.id > maxId);
         if (newData.length === 0) {
@@ -193,6 +225,10 @@
     document.addEventListener('DOMContentLoaded', () => {
       const cached = loadCachedCards();
       if (cached.length > 0) renderCards(cached);
+      else {
+        // Optional: uncomment next line to auto-load data on first launch
+        // loadFullData();
+      }
     });
   </script>
 </body>
