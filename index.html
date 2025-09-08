@@ -175,25 +175,23 @@
     button:hover {
       background: #295595;
     }
-    /* Year input fields styling */
     input[type="text"] {
-      width: 80px; /* 50% smaller width */
+      width: 80px;
       font-size: 16px;
       padding: 6px 12px;
       border-radius: 6px;
       border: 1px solid #aaa;
       background: white;
-      cursor: text;
       margin: 12px 6px 12px 6px;
-      user-select: none;
+      user-select: text;
       box-sizing: border-box;
+      cursor: text;
     }
     label {
       font-weight: bold;
       margin-left: 10px;
       user-select: none;
     }
-    /* Mobile responsiveness */
     @media (max-width: 600px) {
       .flip-card {
         width: 140px;
@@ -214,7 +212,6 @@
         padding: 8px 16px;
         margin: 8px 6px;
       }
-      /* Year filter controls vertical layout on mobile */
       .controls[aria-label="Year filtering controls"] {
         display: flex;
         flex-direction: column;
@@ -228,7 +225,6 @@
         max-width: 200px;
       }
     }
-    /* Controls container */
     .controls {
       text-align: center;
       margin: 15px 0 10px 0;
@@ -259,9 +255,9 @@
 
   <div class="controls" aria-label="Year filtering controls">
     <label for="startYearInput">Start Year:</label>
-    <input type="text" list="yearOptions" id="startYearInput" placeholder="Type year" oninput="validateYearInput('startYearInput')" autocomplete="off" pattern="[0-9]*" inputmode="numeric" />
+    <input type="text" list="yearOptions" id="startYearInput" placeholder="Type year" autocomplete="off" inputmode="numeric" pattern="\d*" oninput="validateYearInput('startYearInput')" />
     <label for="endYearInput">End Year:</label>
-    <input type="text" list="yearOptions" id="endYearInput" placeholder="Type year" oninput="validateYearInput('endYearInput')" autocomplete="off" pattern="[0-9]*" inputmode="numeric" />
+    <input type="text" list="yearOptions" id="endYearInput" placeholder="Type year" autocomplete="off" inputmode="numeric" pattern="\d*" oninput="validateYearInput('endYearInput')" />
     <datalist id="yearOptions"></datalist>
 
     <button onclick="applyYearFilter()">Filter</button>
@@ -283,12 +279,11 @@
     const STORAGE_KEY = 'authorFlashcardsCache';
     let allCardsData = [];
     let filteredCardsData = [];
-    let currentMode = 'author-front'; // or 'work-front'
+    let currentMode = 'author-front';
     let uniqueYears = [];
     let minYear = null;
     let maxYear = null;
 
-    // Parse CSV and convert to array of card objects including parsed works with years
     function csvToObjects(csv) {
       const data = Papa.parse(csv, { header: true, skipEmptyLines: true }).data;
       return data.map(item => {
@@ -302,7 +297,6 @@
       });
     }
 
-    // Parse works string into array of objects with title and year
     function parseWorksWithYears(worksStr) {
       if (!worksStr) return [];
       const parts = worksStr.split(';').map(s => s.trim()).filter(Boolean);
@@ -316,7 +310,6 @@
       });
     }
 
-    // Render all cards
     function renderCards(cardsData) {
       const container = document.getElementById('cardContainer');
       container.innerHTML = '';
@@ -327,7 +320,6 @@
       updateWorksCount(calculateWorksCount(allCardsData));
     }
 
-    // Render one card element
     function renderCard(data) {
       const card = document.createElement('div');
       card.className = 'flip-card';
@@ -365,12 +357,10 @@
       return card;
     }
 
-    // Update author count display
     function updateAuthorCount(count) {
       document.getElementById('authorCount').textContent = `Authors Registered: ${count}`;
     }
 
-    // Calculate total works count and update
     function calculateWorksCount(cards) {
       return cards.reduce((acc, card) => acc + card.Works.length, 0);
     }
@@ -401,7 +391,6 @@
       alert('All cards flipped to front.');
     }
 
-    // Populate datalist for year suggestions based on continuous range
     function populateYearDatalist() {
       const datalist = document.getElementById('yearOptions');
       datalist.innerHTML = '';
@@ -413,7 +402,6 @@
       }
     }
 
-    // Extract min and max year and unique years
     function extractYearsDetails(cards) {
       const yearSet = new Set();
       cards.forEach(card => {
@@ -432,19 +420,17 @@
       uniqueYears = yearsArray;
     }
 
-    // Validate year input allowing only numbers and restricting to min/max year range
     function validateYearInput(id) {
       const input = document.getElementById(id);
       let val = input.value.trim();
       if (val === '') return;
-      // Remove any non-digit characters
+      // Remove non-digit chars
       val = val.replace(/\D/g, '');
       const numVal = Number(val);
       if (isNaN(numVal) || numVal < minYear || numVal > maxYear) {
         input.value = '';
       } else {
         input.value = numVal;
-        // Optional: autofill for partially typed years could be implemented here
       }
     }
 
