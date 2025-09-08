@@ -130,12 +130,18 @@
       margin-bottom: 12px;
       user-select: none;
     }
-    .flip-card-back small {
-      display: block;
+    /* Use ul/li for bullet list of works */
+    .works-list {
+      padding-left: 18px;
+      margin: 0;
       font-size: 16px;
-      white-space: pre-wrap;
       line-height: 1.4;
       user-select: text;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    .works-list li {
+      margin-bottom: 4px;
     }
     button {
       margin: 12px 8px 12px 8px;
@@ -302,12 +308,21 @@
       let frontContent = '';
       let backContent = '';
 
+      // Helper to generate works as bullet list HTML string:
+      function worksListHTML(works) {
+        // Map works to <li> entries including year
+        const items = works.map(w => {
+          return `<li>${w.year !== null ? w.title + ' (' + w.year + ')' : w.title}</li>`;
+        }).join('');
+        return `<ul class="works-list">${items}</ul>`;
+      }
+
       if (currentMode === 'author-front') {
         frontContent = `<img src="${data.ImageURL}" alt="Image of ${data.AuthorName}">`;
-        backContent = `<strong>${data.AuthorName}</strong><small>${data.Works.map(w => w.year !== null ? w.title + ' (' + w.year + ')' : w.title).join('; ')}</small>`;
+        backContent = `<strong>${data.AuthorName}</strong>${worksListHTML(data.Works)}`;
       } else if (currentMode === 'work-front') {
-        // Front with scroll for many works
-        frontContent = `<strong style="margin-top: 20px; user-select:none;">Works:</strong><small style="padding: 0 12px; overflow-y:auto; max-height: 180px; display: block;">${data.Works.map(w => w.year !== null ? w.title + ' (' + w.year + ')' : w.title).join('; ')}</small>`;
+        // Front with scroll and bullet list
+        frontContent = `<strong style="margin-top: 20px; user-select:none;">Works:</strong>${worksListHTML(data.Works)}`;
         // Back with centered author image and name below
         backContent = `
           <img src="${data.ImageURL}" alt="Image of ${data.AuthorName}">
@@ -389,6 +404,7 @@
       uniqueYears = yearsArray;
     }
 
+    // Filter by years from dropdowns
     function applyYearFilter() {
       const startYear = document.getElementById('startYearSelect').value;
       const endYear = document.getElementById('endYearSelect').value;
@@ -430,6 +446,7 @@
       alert('Year filter cleared. Showing all cards.');
     }
 
+    // Change quiz mode and re-render cards accordingly
     function changeMode() {
       const modeSelect = document.getElementById('modeToggle');
       currentMode = modeSelect.value;
@@ -440,6 +457,7 @@
       }
     }
 
+    // Load full CSV data and update cache and UI
     async function loadFullData() {
       try {
         const response = await fetch(CSV_URL);
@@ -457,6 +475,7 @@
       }
     }
 
+    // On load, load cached cards if any else load fresh from CSV
     document.addEventListener('DOMContentLoaded', () => {
       const cached = loadCachedCards();
       if (cached.length > 0) {
