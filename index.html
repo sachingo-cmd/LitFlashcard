@@ -84,6 +84,8 @@
       background: #fff;
       justify-content: center;
       z-index: 2;
+      /* Make front scrollable in work-front mode if needed */
+      overflow-y: auto;
     }
     /* Center the image with 1px padding all around */
     .flip-card-front img {
@@ -110,6 +112,17 @@
       left: 0;
       right: 0;
       bottom: 0;
+    }
+    /* Additional style for back in work-front mode for centering author name below image */
+    .back-author-name-centered {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 8px;
+      color: #333;
+      font-weight: bold;
+      font-size: 18px;
+      user-select: none;
     }
     .flip-card-back strong {
       display: block;
@@ -294,8 +307,12 @@
         frontContent = `<img src="${data.ImageURL}" alt="Image of ${data.AuthorName}">`;
         backContent = `<strong>${data.AuthorName}</strong><small>${data.Works.map(w => w.year !== null ? w.title + ' (' + w.year + ')' : w.title).join('; ')}</small>`;
       } else if (currentMode === 'work-front') {
-        frontContent = `<strong style="margin-top: 20px; user-select:none;">Works:</strong><small style="padding: 0 12px;">${data.Works.map(w => w.year !== null ? w.title + ' (' + w.year + ')' : w.title).join('; ')}</small>`;
-        backContent = `<img src="${data.ImageURL}" alt="Image of ${data.AuthorName}"><strong style="margin-top: 8px; color: #333;">${data.AuthorName}</strong>`;
+        // Front with scroll for many works
+        frontContent = `<strong style="margin-top: 20px; user-select:none;">Works:</strong><small style="padding: 0 12px; overflow-y:auto; max-height: 180px; display: block;">${data.Works.map(w => w.year !== null ? w.title + ' (' + w.year + ')' : w.title).join('; ')}</small>`;
+        // Back with centered author image and name below
+        backContent = `
+          <img src="${data.ImageURL}" alt="Image of ${data.AuthorName}">
+          <div class="back-author-name-centered">${data.AuthorName}</div>`;
       }
 
       card.innerHTML = `
@@ -351,7 +368,7 @@
       }
     }
 
-    // Extract min and max year and unique years (still used for debugging or other features)
+    // Extract min and max year and unique years
     function extractYearsDetails(cards) {
       const yearSet = new Set();
       cards.forEach(card => {
@@ -424,7 +441,6 @@
       }
     }
 
-    // Load full data from CSV, parse, cache, and render
     async function loadFullData() {
       try {
         const response = await fetch(CSV_URL);
@@ -442,7 +458,6 @@
       }
     }
 
-    // Load new data (incremental update) - fixed robust handling
     async function loadNewData() {
       const cached = loadCachedCards();
       let maxId = 0;
