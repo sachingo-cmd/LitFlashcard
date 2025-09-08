@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Author Flashcards</title>
   <style>
-    /* Reset and base */
     body {
       font-family: Arial, sans-serif;
       background: #f0f0f0;
@@ -35,7 +34,6 @@
       justify-content: center;
       margin: 20px;
     }
-    /* Card container */
     .flip-card {
       background: transparent;
       width: 175px;
@@ -47,7 +45,6 @@
       display: flex;
       flex-direction: column;
     }
-    /* Inner flipping box */
     .flip-card-inner {
       position: relative;
       width: 100%;
@@ -63,11 +60,9 @@
       flex-direction: column;
       background: #fff;
     }
-    /* Flipped state */
     .flip-card.flipped .flip-card-inner {
       transform: rotateY(180deg);
     }
-    /* Expanded card size and shadow */
     .flip-card.expanded {
       min-height: 294px;
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
@@ -75,7 +70,6 @@
     .flip-card.expanded .flip-card-inner {
       min-height: 294px;
     }
-    /* Front and back sides */
     .flip-card-front, .flip-card-back {
       position: absolute;
       width: 100%;
@@ -182,7 +176,7 @@
       border-radius: 6px;
       border: 1px solid #aaa;
       background: white;
-      margin: 12px 6px 12px 6px;
+      margin: 12px 6px;
       user-select: text;
       box-sizing: border-box;
       cursor: text;
@@ -407,7 +401,8 @@
       });
       const yearsArray = Array.from(yearSet).sort((a, b) => a - b);
       if (yearsArray.length === 0) {
-        minYear = null; maxYear = null;
+        minYear = null;
+        maxYear = null;
       } else {
         minYear = yearsArray[0];
         maxYear = yearsArray[yearsArray.length - 1];
@@ -415,19 +410,16 @@
       uniqueYears = yearsArray;
     }
 
-    // Better validation allowing typing; only removes non-digits without restricting partial input immediately
     function handleYearInput(id) {
       const input = document.getElementById(id);
       let val = input.value;
-      // Remove non-digit characters only
+      // Remove non-digit characters but allow typing
       const cleaned = val.replace(/[^\d]/g, '');
       if (val !== cleaned) {
         const pos = input.selectionStart - (val.length - cleaned.length);
         input.value = cleaned;
         input.setSelectionRange(pos, pos);
       }
-      // No stricter immediate validation here; user can type freely
-      // Validation will happen on filter apply
     }
 
     function applyYearFilter() {
@@ -437,9 +429,8 @@
       let sYear = startYearInput.value.trim() === '' ? null : Number(startYearInput.value.trim());
       let eYear = endYearInput.value.trim() === '' ? null : Number(endYearInput.value.trim());
 
-      // Basic validity check for numbers and range
       if (sYear !== null && (isNaN(sYear) || sYear < minYear || sYear > maxYear)) {
-        alert(`Start year must be a number between ${minYear} and ${maxYear}');
+        alert(`Start year must be a number between ${minYear} and ${maxYear}`);
         return;
       }
       if (eYear !== null && (isNaN(eYear) || eYear < minYear || eYear > maxYear)) {
