@@ -17,6 +17,16 @@
       background: #3979c2;
       color: white;
       text-align: center;
+      position: relative;
+    }
+    /* Author count display */
+    #authorCount {
+      position: absolute;
+      top: 12px;
+      right: 20px;
+      font-size: 16px;
+      font-weight: bold;
+      user-select: none;
     }
     .container {
       display: flex;
@@ -124,6 +134,18 @@
       font-size: 18px;
       user-select: none;
     }
+    /* Author image on back in work-front mode: contain max height & width without stretching */
+    .work-front-back img {
+      max-width: 130px;
+      max-height: 180px;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      border-radius: 12px;
+      user-select: none;
+      margin: 0 auto;
+      display: block;
+    }
     .flip-card-back strong {
       display: block;
       font-size: 20px;
@@ -199,6 +221,7 @@
     .controls {
       text-align: center;
       margin: 15px 0 10px 0;
+      position: relative;
     }
     .controls > * {
       vertical-align: middle;
@@ -208,7 +231,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 </head>
 <body>
-  <header><h2>Author Flashcards</h2></header>
+  <header>
+    <h2>Author Flashcards</h2>
+    <div id="authorCount" aria-live="polite"></div>
+  </header>
 
   <div class="controls">
     <button onclick="resetCards()">Reset</button>
@@ -264,38 +290,31 @@
       });
     }
 
-    // Parse works string of format "Work1 (1998); Work2 (2001)" into array of objects
+    // Parse works string into array of objects with title and year
     function parseWorksWithYears(worksStr) {
       if (!worksStr) return [];
       const parts = worksStr.split(';').map(s => s.trim()).filter(Boolean);
-      const worksArray = parts.map(workStr => {
-        // Extract year inside parentheses allowing 1-4 digit years (e.g. 24, 405, 2023)
+      return parts.map(workStr => {
         const match = workStr.match(/(.*)\s+\((\d{1,4})\)$/);
         if (match) {
-          return {
-            title: match[1].trim(),
-            year: Number(match[2])
-          };
+          return { title: match[1].trim(), year: Number(match[2]) };
         } else {
-          return {
-            title: workStr,
-            year: null
-          };
+          return { title: workStr, year: null };
         }
       });
-      return worksArray;
     }
 
-    // Render cards in container based on provided data and current mode
+    // Render all cards
     function renderCards(cardsData) {
       const container = document.getElementById('cardContainer');
       container.innerHTML = '';
       cardsData.forEach(data => {
         container.appendChild(renderCard(data));
       });
+      updateAuthorCount(cardsData.length);
     }
 
-    // Create individual flip card DOM element based on mode
+    // Render single card element
     function renderCard(data) {
       const card = document.createElement('div');
       card.className = 'flip-card';
@@ -305,28 +324,25 @@
       };
       card.dataset.id = data.ID;
 
-      let frontContent = '';
-      let backContent = '';
-
-      // Helper to generate works as bullet list HTML string:
+      // Create bullet list HTML for works
       function worksListHTML(works) {
-        // Map works to <li> entries including year
-        const items = works.map(w => {
-          return `<li>${w.year !== null ? w.title + ' (' + w.year + ')' : w.title}</li>`;
-        }).join('');
+        const items = works.map(w => `<li>${w.year !== null ? w.title + ' (' + w.year + ')' : w.title}</li>`).join('');
         return `<ul class="works-list">${items}</ul>`;
       }
+
+      let frontContent = '';
+      let backContent = '';
 
       if (currentMode === 'author-front') {
         frontContent = `<img src="${data.ImageURL}" alt="Image of ${data.AuthorName}">`;
         backContent = `<strong>${data.AuthorName}</strong>${worksListHTML(data.Works)}`;
       } else if (currentMode === 'work-front') {
-        // Front with scroll and bullet list
         frontContent = `<strong style="margin-top: 20px; user-select:none;">Works:</strong>${worksListHTML(data.Works)}`;
-        // Back with centered author image and name below
         backContent = `
-          <img src="${data.ImageURL}" alt="Image of ${data.AuthorName}">
-          <div class="back-author-name-centered">${data.AuthorName}</div>`;
+          <div class="work-front-back">
+            <img src="${data.ImageURL}" alt="Image of ${data.AuthorName}">
+            <div class="back-author-name-centered">${data.AuthorName}</div>
+          </div>`;
       }
 
       card.innerHTML = `
@@ -336,6 +352,12 @@
         </div>
       `;
       return card;
+    }
+
+    // Update author count display
+    function updateAuthorCount(count) {
+      const countDiv = document.getElementById('authorCount');
+      countDiv.textContent = `Authors Registered: ${count}`;
     }
 
     function loadCachedCards() {
