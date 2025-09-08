@@ -115,15 +115,17 @@
       display: block;
       font-size: 20px;
       margin-bottom: 12px;
+      user-select: none;
     }
     .flip-card-back small {
       display: block;
       font-size: 16px;
       white-space: pre-wrap;
       line-height: 1.4;
+      user-select: text;
     }
     button {
-      margin: 12px;
+      margin: 12px 8px 12px 8px;
       padding: 10px 22px;
       font-size: 16px;
       border-radius: 6px;
@@ -136,6 +138,21 @@
     }
     button:hover {
       background: #295595;
+    }
+    select {
+      margin: 12px 6px 12px 6px;
+      padding: 6px 12px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #aaa;
+      user-select: none;
+      cursor: pointer;
+      background: white;
+    }
+    label {
+      font-weight: bold;
+      margin-left: 10px;
+      user-select: none;
     }
     /* Mobile responsiveness - reduce sizes by 30% from original mobile */
     @media (max-width: 600px) {
@@ -153,27 +170,113 @@
         font-size: 14px;
         padding: 14px 18px;
       }
+      button, select {
+        font-size: 14px;
+        padding: 8px 16px;
+        margin: 8px 6px;
+      }
+    }
+    /* Controls container */
+    .controls {
+      text-align: center;
+      margin: 15px 0 10px 0;
+    }
+    .controls > * {
+      vertical-align: middle;
+      user-select: none;
     }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 </head>
 <body>
   <header><h2>Author Flashcards</h2></header>
-  <div style="text-align:center;">
+
+  <div class="controls">
     <button onclick="resetCards()">Reset</button>
     <button onclick="loadNewData()">Scan (Incremental Update)</button>
     <button onclick="loadFullData()">Full Scan (Replace)</button>
   </div>
-  <div class="container" id="cardContainer"></div>
+
+  <div class="controls" aria-label="Year filtering controls">
+    <label for="startYearSelect">Start Year:</label>
+    <select id="startYearSelect">
+      <option value="">--</option>
+    </select>
+
+    <label for="endYearSelect">End Year:</label>
+    <select id="endYearSelect">
+      <option value="">--</option>
+    </select>
+
+    <button onclick="applyYearFilter()">Filter</button>
+    <button onclick="clearYearFilter()">Clear Filter</button>
+  </div>
+
+  <div class="controls" aria-label="Quiz mode toggle">
+    <label for="modeToggle">Show Mode:</label>
+    <select id="modeToggle" onchange="changeMode()">
+      <option value="author-front">Author Image Front</option>
+      <option value="work-front">Work Title Front</option>
+    </select>
+  </div>
+
+  <div class="container" id="cardContainer" aria-live="polite" aria-relevant="additions removals"></div>
 
   <script>
     const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT7cWnraaDNjm3MW4tUeVrVftj6iEBYwNkGZ7WsJsQfte3rbRhr1AF43fbIyVe1-ZMtvRVZgDrwusrT/pub?output=csv';
     const STORAGE_KEY = 'authorFlashcardsCache';
+    let allCardsData = [];
+    let filteredCardsData = [];
+    let currentMode = 'author-front'; // or 'work-front'
+    let uniqueYears = [];
 
+    // Parse CSV and convert to array of card objects including parsed works with years
     function csvToObjects(csv) {
-      return Papa.parse(csv, { header: true, skipEmptyLines: true }).data;
+      const data = Papa.parse(csv, { header: true, skipEmptyLines: true }).data;
+      return data.map(item => {
+        const parsedWorks = parseWorksWithYears(item.Works);
+        return {
+          ID: Number(item.ID),
+          ImageURL: item.ImageURL,
+          AuthorName: item.AuthorName,
+          Works: parsedWorks // Array of { title, year }
+        };
+      });
     }
 
+    // Parse works string of format "Work1 (1998); Work2 (2001)" into array of objects
+    function parseWorksWithYears(worksStr) {
+      if (!worksStr) return [];
+      const parts = worksStr.split(';').map(s => s.trim()).filter(Boolean);
+      const worksArray = parts.map(workStr => {
+        // Extract year inside parentheses
+        const match = workStr.match(/(.*)\s+\((\d{4})\)$/);
+        if (match) {
+          return {
+            title: match[1].trim(),
+            year: Number(match[2])
+          };
+        } else {
+          // If no year found, keep year as null (optional, can exclude later)
+          return {
+            title: workStr,
+            year: null
+          };
+        }
+      });
+      return worksArray;
+    }
+
+    // Render cards in container based on provided data and current mode
+    function renderCards(cardsData) {
+      const container = document.getElementById('cardContainer');
+      container.innerHTML = '';
+      cardsData.forEach(data => {
+        container.appendChild(renderCard(data));
+      });
+    }
+
+    // Create individual flip card DOM element based on mode
     function renderCard(data) {
       const card = document.createElement('div');
       card.className = 'flip-card';
@@ -182,20 +285,33 @@
         card.classList.toggle('expanded');
       };
       card.dataset.id = data.ID;
+
+      // Depending on mode, front and back content changes
+      let frontContent = '';
+      let backContent = '';
+
+      if (currentMode === 'author-front') {
+        // Front: author image
+        frontContent = `<img src="${data.ImageURL}" alt="Image of ${data.AuthorName}">`;
+        // Back: author name + all works listed
+        backContent = `<strong>${data.AuthorName}</strong><small>${data.Works.map(w => w.title).join('; ')}</small>`;
+      } else if (currentMode === 'work-front') {
+        // Front: list all works titles joined by ;
+        frontContent = `<strong style="margin-top: 20px; user-select:none;">Works:</strong><small style="padding: 0 12px;">${data.Works.map(w => w.title).join('; ')}</small>`;
+        // Back: author image + author name below image
+        backContent = `<img src="${data.ImageURL}" alt="Image of ${data.AuthorName}"><strong style="margin-top: 8px; color: #333;">${data.AuthorName}</strong>`;
+      }
+
       card.innerHTML = `
         <div class="flip-card-inner">
-          <div class="flip-card-front">
-            <img src="${data.ImageURL}" alt="${data.AuthorName}">
-          </div>
-          <div class="flip-card-back">
-            <strong>${data.AuthorName}</strong>
-            <small>${data.Works || ''}</small>
-          </div>
+          <div class="flip-card-front">${frontContent}</div>
+          <div class="flip-card-back">${backContent}</div>
         </div>
       `;
       return card;
     }
 
+    // Load cards from cache and render
     function loadCachedCards() {
       const data = localStorage.getItem(STORAGE_KEY);
       if (!data) return [];
@@ -206,18 +322,12 @@
       }
     }
 
+    // Save cards to cache
     function saveCardsToCache(cards) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
     }
 
-    function renderCards(cardsData) {
-      const container = document.getElementById('cardContainer');
-      container.innerHTML = '';
-      cardsData.forEach(data => {
-        container.appendChild(renderCard(data));
-      });
-    }
-
+    // Reset all cards to face front side
     function resetCards() {
       document.querySelectorAll('.flip-card').forEach(card => {
         card.classList.remove('flipped');
@@ -226,56 +336,164 @@
       alert('All cards flipped to front.');
     }
 
+    // Populate year dropdowns with unique years from all cards
+    function populateYearDropdowns() {
+      const startSelect = document.getElementById('startYearSelect');
+      const endSelect = document.getElementById('endYearSelect');
+      // Clear existing options except default
+      startSelect.innerHTML = '<option value="">--</option>';
+      endSelect.innerHTML = '<option value="">--</option>';
+
+      uniqueYears.forEach(year => {
+        const option1 = document.createElement('option');
+        option1.value = year;
+        option1.textContent = year;
+        startSelect.appendChild(option1);
+        const option2 = document.createElement('option');
+        option2.value = year;
+        option2.textContent = year;
+        endSelect.appendChild(option2);
+      });
+    }
+
+    // Extract unique sorted years from all cards' works
+    function extractUniqueYears(cards) {
+      const yearSet = new Set();
+      cards.forEach(card => {
+        card.Works.forEach(w => {
+          if (typeof w.year === 'number' && !isNaN(w.year)) {
+            yearSet.add(w.year);
+          }
+        });
+      });
+      const yearsArray = Array.from(yearSet);
+      yearsArray.sort((a, b) => a - b);
+      return yearsArray;
+    }
+
+    // Apply year filter, using dropdown selections
+    function applyYearFilter() {
+      const startYear = document.getElementById('startYearSelect').value;
+      const endYear = document.getElementById('endYearSelect').value;
+      let sYear = startYear === '' ? null : Number(startYear);
+      let eYear = endYear === '' ? null : Number(endYear);
+
+      if (sYear === null && eYear === null) {
+        // Show all
+        filteredCardsData = allCardsData.slice();
+        renderCards(filteredCardsData);
+        alert('No year filter selected. Showing all cards.');
+        return;
+      }
+
+      // If only one year selected, filter for exact year
+      if (sYear !== null && eYear === null) {
+        eYear = sYear;
+      }
+
+      // Swap if end year less than start year
+      if (sYear !== null && eYear !== null && eYear < sYear) {
+        [sYear, eYear] = [eYear, sYear];
+        // Also swap dropdown UI to reflect for better UX
+        document.getElementById('startYearSelect').value = sYear;
+        document.getElementById('endYearSelect').value = eYear;
+      }
+
+      filteredCardsData = allCardsData.filter(card => {
+        return card.Works.some(w => {
+          return typeof w.year === 'number' && w.year >= sYear && w.year <= eYear;
+        });
+      });
+      renderCards(filteredCardsData);
+      alert(`Showing cards with works from ${sYear} to ${eYear}.`);
+    }
+
+    function clearYearFilter() {
+      document.getElementById('startYearSelect').value = '';
+      document.getElementById('endYearSelect').value = '';
+      filteredCardsData = allCardsData.slice();
+      renderCards(filteredCardsData);
+      alert('Year filter cleared. Showing all cards.');
+    }
+
+    // Toggle quiz display mode and rerender current cards (filtered view or all)
+    function changeMode() {
+      const modeSelect = document.getElementById('modeToggle');
+      currentMode = modeSelect.value;
+      // Rerender current filtered cards or all
+      if (filteredCardsData.length > 0) {
+        renderCards(filteredCardsData);
+      } else {
+        renderCards(allCardsData);
+      }
+    }
+
+    // Load full data from CSV, parse, cache, and render
     async function loadFullData() {
       try {
         const response = await fetch(CSV_URL);
+        if (!response.ok) throw new Error(`Network response not ok ${response.status}`);
         const csvText = await response.text();
-        let allData = csvToObjects(csvText);
-        allData = allData.map(item => ({
-          ID: item.ID,
-          ImageURL: item.ImageURL,
-          AuthorName: item.AuthorName,
-          Works: item.Works || ''
-        }));
-        saveCardsToCache(allData);
-        renderCards(allData);
+        allCardsData = csvToObjects(csvText);
+        saveCardsToCache(allCardsData);
+        filteredCardsData = [];
+        // Update year dropdowns from fresh data
+        uniqueYears = extractUniqueYears(allCardsData);
+        populateYearDropdowns();
+        renderCards(allCardsData);
         alert('Full data loaded! All cards updated.');
       } catch (err) {
         alert('Error loading full data: ' + err.message);
       }
     }
 
+    // Load only new data (incremental update) - fix to correctly compare numeric IDs and append new cards
     async function loadNewData() {
       const cached = loadCachedCards();
-      const maxId = cached.reduce((max, item) => Number(item.ID) > Number(max) ? Number(item.ID) : Number(max), 0);
+      const maxId = cached.reduce((max, item) => Math.max(max, Number(item.ID)), 0);
       try {
         const response = await fetch(CSV_URL);
+        if (!response.ok) throw new Error(`Network response not ok ${response.status}`);
         const csvText = await response.text();
-        let allData = csvToObjects(csvText);
-        allData = allData.map(item => ({
-          ID: item.ID,
+        const allDataRaw = Papa.parse(csvText, { header: true, skipEmptyLines: true }).data;
+        // Parse works with years and convert IDs to number
+        const allData = allDataRaw.map(item => ({
+          ID: Number(item.ID),
           ImageURL: item.ImageURL,
           AuthorName: item.AuthorName,
-          Works: item.Works || ''
+          Works: parseWorksWithYears(item.Works)
         }));
-        const newData = allData.filter(item => Number(item.ID) > Number(maxId));
+        // Filter only new items with IDs > maxId
+        const newData = allData.filter(item => item.ID > maxId);
         if (newData.length === 0) {
           alert('No new data to update.');
           return;
         }
         const updatedData = cached.concat(newData);
         saveCardsToCache(updatedData);
-        renderCards(updatedData);
+        allCardsData = updatedData;
+        filteredCardsData = [];
+        uniqueYears = extractUniqueYears(allCardsData);
+        populateYearDropdowns();
+        renderCards(allCardsData);
         alert(newData.length + ' new card(s) added!');
       } catch (err) {
         alert('Error loading new data: ' + err.message);
       }
     }
 
+    // On page load: load cache and render cards & setup UI
     document.addEventListener('DOMContentLoaded', () => {
       const cached = loadCachedCards();
       if (cached.length > 0) {
-        renderCards(cached);
+        allCardsData = cached;
+        filteredCardsData = [];
+        uniqueYears = extractUniqueYears(allCardsData);
+        populateYearDropdowns();
+        renderCards(allCardsData);
+      } else {
+        // No cache - load full data
+        loadFullData();
       }
     });
   </script>
