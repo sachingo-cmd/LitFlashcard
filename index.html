@@ -206,7 +206,6 @@
 
   <div class="controls">
     <button onclick="resetCards()">Reset</button>
-    <button onclick="loadNewData()">Scan (Incremental Update)</button>
     <button onclick="loadFullData()">Full Scan (Replace)</button>
   </div>
 
@@ -455,43 +454,6 @@
         alert('Full data loaded! All cards updated.');
       } catch (err) {
         alert('Error loading full data: ' + err.message);
-      }
-    }
-
-    async function loadNewData() {
-      const cached = loadCachedCards();
-      let maxId = 0;
-      if (cached.length > 0) {
-        maxId = cached.reduce((max, item) => {
-          return Math.max(max, Number(item.ID));
-        }, 0);
-      }
-      try {
-        const response = await fetch(CSV_URL);
-        if (!response.ok) throw new Error(`Network response not ok ${response.status}`);
-        const csvText = await response.text();
-        const allDataRaw = Papa.parse(csvText, { header: true, skipEmptyLines: true }).data;
-        const allData = allDataRaw.map(item => ({
-          ID: Number(item.ID),
-          ImageURL: item.ImageURL,
-          AuthorName: item.AuthorName,
-          Works: parseWorksWithYears(item.Works),
-        }));
-        const newData = allData.filter(item => item.ID > maxId);
-        if (newData.length === 0) {
-          alert('No new data to update.');
-          return;
-        }
-        const updatedData = cached.concat(newData);
-        saveCardsToCache(updatedData);
-        allCardsData = updatedData;
-        filteredCardsData = [];
-        extractYearsDetails(allCardsData);
-        populateYearDropdowns();
-        renderCards(allCardsData);
-        alert(newData.length + ' new card(s) added!');
-      } catch (err) {
-        alert('Error loading new data: ' + err.message);
       }
     }
 
