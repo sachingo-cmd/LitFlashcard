@@ -35,10 +35,10 @@
       justify-content: center;
       margin: 20px;
     }
-    /* Card container - reduced size by ~30% */
+    /* Card container */
     .flip-card {
       background: transparent;
-      width: 175px; /* 250 * 0.7 = 175 */
+      width: 175px;
       cursor: pointer;
       border-radius: 12px;
       transition: all 0.3s ease;
@@ -51,7 +51,7 @@
     .flip-card-inner {
       position: relative;
       width: 100%;
-      min-height: 224px; /* 320 * 0.7 = 224 */
+      min-height: 224px;
       transition: transform 0.6s;
       transform-style: preserve-3d;
       border-radius: 12px;
@@ -69,7 +69,7 @@
     }
     /* Expanded card size and shadow */
     .flip-card.expanded {
-      min-height: 294px; /* 420 * 0.7 = 294 */
+      min-height: 294px;
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
     }
     .flip-card.expanded .flip-card-inner {
@@ -94,10 +94,8 @@
       background: #fff;
       justify-content: center;
       z-index: 2;
-      /* Make front scrollable in work-front mode if needed */
       overflow-y: auto;
     }
-    /* Center the image with 1px padding all around */
     .flip-card-front img {
       max-width: calc(100% - 2px);
       max-height: calc(100% - 2px);
@@ -123,7 +121,6 @@
       right: 0;
       bottom: 0;
     }
-    /* Additional style for back in work-front mode for centering author name below image */
     .back-author-name-centered {
       display: flex;
       flex-direction: column;
@@ -134,7 +131,6 @@
       font-size: 18px;
       user-select: none;
     }
-    /* Author image on back in work-front mode: contain max height & width without stretching */
     .work-front-back img {
       max-width: 130px;
       max-height: 180px;
@@ -152,7 +148,6 @@
       margin-bottom: 12px;
       user-select: none;
     }
-    /* Use ul/li for bullet list of works */
     .works-list {
       padding-left: 18px;
       margin: 0;
@@ -180,23 +175,18 @@
     button:hover {
       background: #295595;
     }
-    /* Use datalist styling for input suggestion */
-    input, select {
+    /* Year input fields styling */
+    input[type="text"] {
+      width: 80px; /* 50% smaller width */
       font-size: 16px;
       padding: 6px 12px;
       border-radius: 6px;
       border: 1px solid #aaa;
       background: white;
-      cursor: pointer;
+      cursor: text;
       margin: 12px 6px 12px 6px;
       user-select: none;
       box-sizing: border-box;
-    }
-    /* Container for year inputs */
-    .year-input {
-      display: inline-block;
-      vertical-align: middle;
-      position: relative;
     }
     label {
       font-weight: bold;
@@ -206,11 +196,11 @@
     /* Mobile responsiveness */
     @media (max-width: 600px) {
       .flip-card {
-        width: 140px; /* 200 * 0.7 = 140 */
+        width: 140px;
         margin-bottom: 14px;
       }
       .flip-card.expanded {
-        min-height: 252px; /* 360 * 0.7 = 252 */
+        min-height: 252px;
       }
       .flip-card-front img {
         max-height: calc(100% - 2px);
@@ -219,10 +209,23 @@
         font-size: 14px;
         padding: 14px 18px;
       }
-      button, select, input {
+      button, input[type="text"], select {
         font-size: 14px;
         padding: 8px 16px;
         margin: 8px 6px;
+      }
+      /* Year filter controls vertical layout on mobile */
+      .controls[aria-label="Year filtering controls"] {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: center;
+      }
+      .controls[aria-label="Year filtering controls"] label,
+      .controls[aria-label="Year filtering controls"] input[type="text"],
+      .controls[aria-label="Year filtering controls"] button {
+        width: 80%;
+        max-width: 200px;
       }
     }
     /* Controls container */
@@ -240,9 +243,9 @@
 </head>
 <body>
   <header>
-    <div style="display:flex; justify-content: space-between; align-items: center;">
-      <h2 style="margin: 0;">Author Flashcards</h2>
-      <div>
+    <div style="display:flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+      <h2 style="margin: 0; flex-grow: 1;">Author Flashcards</h2>
+      <div style="min-width:160px; text-align: right;">
         <div id="authorCount" aria-live="polite" aria-atomic="true"></div>
         <div id="worksCount" aria-live="polite" aria-atomic="true"></div>
       </div>
@@ -256,9 +259,9 @@
 
   <div class="controls" aria-label="Year filtering controls">
     <label for="startYearInput">Start Year:</label>
-    <input list="yearOptions" id="startYearInput" placeholder="Type or select year" oninput="validateYearInput('startYearInput')" autocomplete="off"/>
+    <input type="text" list="yearOptions" id="startYearInput" placeholder="Type year" oninput="validateYearInput('startYearInput')" autocomplete="off" pattern="[0-9]*" inputmode="numeric" />
     <label for="endYearInput">End Year:</label>
-    <input list="yearOptions" id="endYearInput" placeholder="Type or select year" oninput="validateYearInput('endYearInput')" autocomplete="off"/>
+    <input type="text" list="yearOptions" id="endYearInput" placeholder="Type year" oninput="validateYearInput('endYearInput')" autocomplete="off" pattern="[0-9]*" inputmode="numeric" />
     <datalist id="yearOptions"></datalist>
 
     <button onclick="applyYearFilter()">Filter</button>
@@ -299,7 +302,7 @@
       });
     }
 
-    // Parse works string into array of objects
+    // Parse works string into array of objects with title and year
     function parseWorksWithYears(worksStr) {
       if (!worksStr) return [];
       const parts = worksStr.split(';').map(s => s.trim()).filter(Boolean);
@@ -362,21 +365,18 @@
       return card;
     }
 
-    // Update author count in header, always reflecting original full data
+    // Update author count display
     function updateAuthorCount(count) {
-      const countDiv = document.getElementById('authorCount');
-      countDiv.textContent = `Authors Registered: ${count}`;
+      document.getElementById('authorCount').textContent = `Authors Registered: ${count}`;
     }
 
-    // Calculate total number of works in all cards (sum of all works)
+    // Calculate total works count and update
     function calculateWorksCount(cards) {
       return cards.reduce((acc, card) => acc + card.Works.length, 0);
     }
 
-    // Update works count in header
     function updateWorksCount(count) {
-      const worksDiv = document.getElementById('worksCount');
-      worksDiv.textContent = `Works Registered: ${count}`;
+      document.getElementById('worksCount').textContent = `Works Registered: ${count}`;
     }
 
     function loadCachedCards() {
@@ -432,24 +432,22 @@
       uniqueYears = yearsArray;
     }
 
-    // Validate year input: on typing, if value not in range or non-number, clear it
+    // Validate year input allowing only numbers and restricting to min/max year range
     function validateYearInput(id) {
       const input = document.getElementById(id);
       let val = input.value.trim();
       if (val === '') return;
+      // Remove any non-digit characters
+      val = val.replace(/\D/g, '');
       const numVal = Number(val);
       if (isNaN(numVal) || numVal < minYear || numVal > maxYear) {
         input.value = '';
       } else {
-        // Make sure input matches a valid suggestion in datalist (optional)
-        const validYears = uniqueYears;
-        if (!validYears.includes(numVal)) {
-          input.value = '';
-        }
+        input.value = numVal;
+        // Optional: autofill for partially typed years could be implemented here
       }
     }
 
-    // Apply filter reading from year inputs with datalist, validating values
     function applyYearFilter() {
       const startYearInput = document.getElementById('startYearInput');
       const endYearInput = document.getElementById('endYearInput');
@@ -490,7 +488,6 @@
       alert('Year filter cleared. Showing all cards.');
     }
 
-    // Change quiz mode and re-render cards accordingly
     function changeMode() {
       const modeSelect = document.getElementById('modeToggle');
       currentMode = modeSelect.value;
@@ -501,7 +498,6 @@
       }
     }
 
-    // Load full CSV data and update cache and UI
     async function loadFullData() {
       try {
         const response = await fetch(CSV_URL);
@@ -519,7 +515,6 @@
       }
     }
 
-    // On load, load cached cards if any else load fresh from CSV
     document.addEventListener('DOMContentLoaded', () => {
       const cached = loadCachedCards();
       if (cached.length > 0) {
@@ -535,4 +530,3 @@
   </script>
 </body>
 </html>
-
