@@ -229,6 +229,8 @@
     let filteredCardsData = [];
     let currentMode = 'author-front'; // or 'work-front'
     let uniqueYears = [];
+    let minYear = null;
+    let maxYear = null;
 
     // Parse CSV and convert to array of card objects including parsed works with years
     function csvToObjects(csv) {
@@ -250,11 +252,11 @@
       const parts = worksStr.split(';').map(s => s.trim()).filter(Boolean);
       const worksArray = parts.map(workStr => {
         // Extract year inside parentheses allowing 1-4 digit years (e.g. 24, 405, 2023)
-        const match = workStr.match(/(.*)\s+$$(\d{1,4})$$$/);
+        const match = workStr.match(/(.*)\s+\((\d{1,4})\)$/);
         if (match) {
           return {
-            title: match.trim(),
-            year: Number(match)
+            title: match[1].trim(),
+            year: Number(match[2])
           };
         } else {
           return {
@@ -285,20 +287,14 @@
       };
       card.dataset.id = data.ID;
 
-      // Depending on mode, front and back content changes
       let frontContent = '';
       let backContent = '';
 
       if (currentMode === 'author-front') {
-        // Front: author image
         frontContent = `<img src="${data.ImageURL}" alt="Image of ${data.AuthorName}">`;
-        // Back: author name + all works with years listed
-        // Format: WorkTitle (Year)
         backContent = `<strong>${data.AuthorName}</strong><small>${data.Works.map(w => w.year !== null ? w.title + ' (' + w.year + ')' : w.title).join('; ')}</small>`;
       } else if (currentMode === 'work-front') {
-        // Front: list all works titles with years joined by ;
         frontContent = `<strong style="margin-top: 20px; user-select:none;">Works:</strong><small style="padding: 0 12px;">${data.Works.map(w => w.year !== null ? w.title + ' (' + w.year + ')' : w.title).join('; ')}</small>`;
-        // Back: author image + author name below image
         backContent = `<img src="${data.ImageURL}" alt="Image of ${data.AuthorName}"><strong style="margin-top: 8px; color: #333;">${data.AuthorName}</strong>`;
       }
 
@@ -311,7 +307,6 @@
       return card;
     }
 
-    // Load cards from cache and render
     function loadCachedCards() {
       const data = localStorage.getItem(STORAGE_KEY);
       if (!data) return [];
@@ -322,12 +317,10 @@
       }
     }
 
-    // Save cards to cache
     function saveCardsToCache(cards) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
     }
 
-    // Reset all cards to face front side
     function resetCards() {
       document.querySelectorAll('.flip-card').forEach(card => {
         card.classList.remove('flipped');
@@ -336,28 +329,30 @@
       alert('All cards flipped to front.');
     }
 
-    // Populate year dropdowns with unique years from all cards
+    // Populate year dropdowns with continuous full range from minYear to maxYear
     function populateYearDropdowns() {
       const startSelect = document.getElementById('startYearSelect');
       const endSelect = document.getElementById('endYearSelect');
-      // Clear existing options except default
       startSelect.innerHTML = '<option value="">--</option>';
       endSelect.innerHTML = '<option value="">--</option>';
 
-      uniqueYears.forEach(year => {
+      if (minYear === null || maxYear === null) return;
+
+      for (let year = minYear; year <= maxYear; year++) {
         const option1 = document.createElement('option');
         option1.value = year;
         option1.textContent = year;
         startSelect.appendChild(option1);
+
         const option2 = document.createElement('option');
         option2.value = year;
         option2.textContent = year;
         endSelect.appendChild(option2);
-      });
+      }
     }
 
-    // Extract unique sorted years from all cards' works
-    function extractUniqueYears(cards) {
+    // Extract min and max year and unique years (still used for debugging or other features)
+    function extractYearsDetails(cards) {
       const yearSet = new Set();
       cards.forEach(card => {
         card.Works.forEach(w => {
@@ -368,10 +363,16 @@
       });
       const yearsArray = Array.from(yearSet);
       yearsArray.sort((a, b) => a - b);
-      return yearsArray;
+      if (yearsArray.length === 0) {
+        minYear = null;
+        maxYear = null;
+      } else {
+        minYear = yearsArray[0];
+        maxYear = yearsArray[yearsArray.length - 1];
+      }
+      uniqueYears = yearsArray;
     }
 
-    // Apply year filter, using dropdown selections
     function applyYearFilter() {
       const startYear = document.getElementById('startYearSelect').value;
       const endYear = document.getElementById('endYearSelect').value;
@@ -379,31 +380,28 @@
       let eYear = endYear === '' ? null : Number(endYear);
 
       if (sYear === null && eYear === null) {
-        // Show all
         filteredCardsData = allCardsData.slice();
         renderCards(filteredCardsData);
         alert('No year filter selected. Showing all cards.');
         return;
       }
 
-      // If only one year selected, filter for exact year
       if (sYear !== null && eYear === null) {
         eYear = sYear;
       }
 
-      // Swap if end year less than start year
       if (sYear !== null && eYear !== null && eYear < sYear) {
         [sYear, eYear] = [eYear, sYear];
-        // Also swap dropdown UI to reflect for better UX
         document.getElementById('startYearSelect').value = sYear;
         document.getElementById('endYearSelect').value = eYear;
       }
 
-      filteredCardsData = allCardsData.filter(card => {
-        return card.Works.some(w => {
-          return typeof w.year === 'number' && w.year >= sYear && w.year <= eYear;
-        });
-      });
+      filteredCardsData = allCardsData.filter(card =>
+        card.Works.some(w =>
+          typeof w.year === 'number' && w.year >= sYear && w.year <= eYear
+        )
+      );
+
       renderCards(filteredCardsData);
       alert(`Showing cards with works from ${sYear} to ${eYear}.`);
     }
@@ -416,11 +414,9 @@
       alert('Year filter cleared. Showing all cards.');
     }
 
-    // Toggle quiz display mode and rerender current cards (filtered view or all)
     function changeMode() {
       const modeSelect = document.getElementById('modeToggle');
       currentMode = modeSelect.value;
-      // Rerender current filtered cards or all
       if (filteredCardsData.length > 0) {
         renderCards(filteredCardsData);
       } else {
@@ -437,8 +433,7 @@
         allCardsData = csvToObjects(csvText);
         saveCardsToCache(allCardsData);
         filteredCardsData = [];
-        // Update year dropdowns from fresh data
-        uniqueYears = extractUniqueYears(allCardsData);
+        extractYearsDetails(allCardsData);
         populateYearDropdowns();
         renderCards(allCardsData);
         alert('Full data loaded! All cards updated.');
@@ -447,23 +442,26 @@
       }
     }
 
-    // Load only new data (incremental update) - fix to correctly compare numeric IDs and append new cards
+    // Load new data (incremental update) - fixed robust handling
     async function loadNewData() {
       const cached = loadCachedCards();
-      const maxId = cached.reduce((max, item) => Math.max(max, Number(item.ID)), 0);
+      let maxId = 0;
+      if (cached.length > 0) {
+        maxId = cached.reduce((max, item) => {
+          return Math.max(max, Number(item.ID));
+        }, 0);
+      }
       try {
         const response = await fetch(CSV_URL);
         if (!response.ok) throw new Error(`Network response not ok ${response.status}`);
         const csvText = await response.text();
         const allDataRaw = Papa.parse(csvText, { header: true, skipEmptyLines: true }).data;
-        // Parse works with years and convert IDs to number
         const allData = allDataRaw.map(item => ({
           ID: Number(item.ID),
           ImageURL: item.ImageURL,
           AuthorName: item.AuthorName,
-          Works: parseWorksWithYears(item.Works)
+          Works: parseWorksWithYears(item.Works),
         }));
-        // Filter only new items with IDs > maxId
         const newData = allData.filter(item => item.ID > maxId);
         if (newData.length === 0) {
           alert('No new data to update.');
@@ -473,7 +471,7 @@
         saveCardsToCache(updatedData);
         allCardsData = updatedData;
         filteredCardsData = [];
-        uniqueYears = extractUniqueYears(allCardsData);
+        extractYearsDetails(allCardsData);
         populateYearDropdowns();
         renderCards(allCardsData);
         alert(newData.length + ' new card(s) added!');
@@ -482,17 +480,15 @@
       }
     }
 
-    // On page load: load cache and render cards & setup UI
     document.addEventListener('DOMContentLoaded', () => {
       const cached = loadCachedCards();
       if (cached.length > 0) {
         allCardsData = cached;
         filteredCardsData = [];
-        uniqueYears = extractUniqueYears(allCardsData);
+        extractYearsDetails(allCardsData);
         populateYearDropdowns();
         renderCards(allCardsData);
       } else {
-        // No cache - load full data
         loadFullData();
       }
     });
