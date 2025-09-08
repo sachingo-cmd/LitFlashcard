@@ -16,14 +16,14 @@
       padding: 10px 20px;
       background: #3979c2;
       color: white;
-      text-align: center;
+      text-align: left;
       position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      user-select: none;
     }
-    /* Author count display */
-    #authorCount {
-      position: absolute;
-      top: 12px;
-      right: 20px;
+    #authorCount, #worksCount {
       font-size: 16px;
       font-weight: bold;
       user-select: none;
@@ -180,22 +180,30 @@
     button:hover {
       background: #295595;
     }
-    select {
-      margin: 12px 6px 12px 6px;
-      padding: 6px 12px;
+    /* Use datalist styling for input suggestion */
+    input, select {
       font-size: 16px;
+      padding: 6px 12px;
       border-radius: 6px;
       border: 1px solid #aaa;
-      user-select: none;
-      cursor: pointer;
       background: white;
+      cursor: pointer;
+      margin: 12px 6px 12px 6px;
+      user-select: none;
+      box-sizing: border-box;
+    }
+    /* Container for year inputs */
+    .year-input {
+      display: inline-block;
+      vertical-align: middle;
+      position: relative;
     }
     label {
       font-weight: bold;
       margin-left: 10px;
       user-select: none;
     }
-    /* Mobile responsiveness - reduce sizes by 30% from original mobile */
+    /* Mobile responsiveness */
     @media (max-width: 600px) {
       .flip-card {
         width: 140px; /* 200 * 0.7 = 140 */
@@ -211,7 +219,7 @@
         font-size: 14px;
         padding: 14px 18px;
       }
-      button, select {
+      button, select, input {
         font-size: 14px;
         padding: 8px 16px;
         margin: 8px 6px;
@@ -232,8 +240,13 @@
 </head>
 <body>
   <header>
-    <h2>Author Flashcards</h2>
-    <div id="authorCount" aria-live="polite"></div>
+    <div style="display:flex; justify-content: space-between; align-items: center;">
+      <h2 style="margin: 0;">Author Flashcards</h2>
+      <div>
+        <div id="authorCount" aria-live="polite" aria-atomic="true"></div>
+        <div id="worksCount" aria-live="polite" aria-atomic="true"></div>
+      </div>
+    </div>
   </header>
 
   <div class="controls">
@@ -242,15 +255,11 @@
   </div>
 
   <div class="controls" aria-label="Year filtering controls">
-    <label for="startYearSelect">Start Year:</label>
-    <select id="startYearSelect">
-      <option value="">--</option>
-    </select>
-
-    <label for="endYearSelect">End Year:</label>
-    <select id="endYearSelect">
-      <option value="">--</option>
-    </select>
+    <label for="startYearInput">Start Year:</label>
+    <input list="yearOptions" id="startYearInput" placeholder="Type or select year" oninput="validateYearInput('startYearInput')" autocomplete="off"/>
+    <label for="endYearInput">End Year:</label>
+    <input list="yearOptions" id="endYearInput" placeholder="Type or select year" oninput="validateYearInput('endYearInput')" autocomplete="off"/>
+    <datalist id="yearOptions"></datalist>
 
     <button onclick="applyYearFilter()">Filter</button>
     <button onclick="clearYearFilter()">Clear Filter</button>
@@ -285,12 +294,12 @@
           ID: Number(item.ID),
           ImageURL: item.ImageURL,
           AuthorName: item.AuthorName,
-          Works: parsedWorks // Array of { title, year }
+          Works: parsedWorks
         };
       });
     }
 
-    // Parse works string into array of objects with title and year
+    // Parse works string into array of objects
     function parseWorksWithYears(worksStr) {
       if (!worksStr) return [];
       const parts = worksStr.split(';').map(s => s.trim()).filter(Boolean);
@@ -311,10 +320,11 @@
       cardsData.forEach(data => {
         container.appendChild(renderCard(data));
       });
-      updateAuthorCount(cardsData.length);
+      updateAuthorCount(allCardsData.length);
+      updateWorksCount(calculateWorksCount(allCardsData));
     }
 
-    // Render single card element
+    // Render one card element
     function renderCard(data) {
       const card = document.createElement('div');
       card.className = 'flip-card';
@@ -324,7 +334,6 @@
       };
       card.dataset.id = data.ID;
 
-      // Create bullet list HTML for works
       function worksListHTML(works) {
         const items = works.map(w => `<li>${w.year !== null ? w.title + ' (' + w.year + ')' : w.title}</li>`).join('');
         return `<ul class="works-list">${items}</ul>`;
@@ -349,15 +358,25 @@
         <div class="flip-card-inner">
           <div class="flip-card-front">${frontContent}</div>
           <div class="flip-card-back">${backContent}</div>
-        </div>
-      `;
+        </div>`;
       return card;
     }
 
-    // Update author count display
+    // Update author count in header, always reflecting original full data
     function updateAuthorCount(count) {
       const countDiv = document.getElementById('authorCount');
       countDiv.textContent = `Authors Registered: ${count}`;
+    }
+
+    // Calculate total number of works in all cards (sum of all works)
+    function calculateWorksCount(cards) {
+      return cards.reduce((acc, card) => acc + card.Works.length, 0);
+    }
+
+    // Update works count in header
+    function updateWorksCount(count) {
+      const worksDiv = document.getElementById('worksCount');
+      worksDiv.textContent = `Works Registered: ${count}`;
     }
 
     function loadCachedCards() {
@@ -382,25 +401,15 @@
       alert('All cards flipped to front.');
     }
 
-    // Populate year dropdowns with continuous full range from minYear to maxYear
-    function populateYearDropdowns() {
-      const startSelect = document.getElementById('startYearSelect');
-      const endSelect = document.getElementById('endYearSelect');
-      startSelect.innerHTML = '<option value="">--</option>';
-      endSelect.innerHTML = '<option value="">--</option>';
-
+    // Populate datalist for year suggestions based on continuous range
+    function populateYearDatalist() {
+      const datalist = document.getElementById('yearOptions');
+      datalist.innerHTML = '';
       if (minYear === null || maxYear === null) return;
-
       for (let year = minYear; year <= maxYear; year++) {
-        const option1 = document.createElement('option');
-        option1.value = year;
-        option1.textContent = year;
-        startSelect.appendChild(option1);
-
-        const option2 = document.createElement('option');
-        option2.value = year;
-        option2.textContent = year;
-        endSelect.appendChild(option2);
+        const option = document.createElement('option');
+        option.value = year;
+        datalist.appendChild(option);
       }
     }
 
@@ -409,13 +418,10 @@
       const yearSet = new Set();
       cards.forEach(card => {
         card.Works.forEach(w => {
-          if (typeof w.year === 'number' && !isNaN(w.year)) {
-            yearSet.add(w.year);
-          }
+          if (typeof w.year === 'number' && !isNaN(w.year)) yearSet.add(w.year);
         });
       });
-      const yearsArray = Array.from(yearSet);
-      yearsArray.sort((a, b) => a - b);
+      const yearsArray = Array.from(yearSet).sort((a, b) => a - b);
       if (yearsArray.length === 0) {
         minYear = null;
         maxYear = null;
@@ -426,12 +432,30 @@
       uniqueYears = yearsArray;
     }
 
-    // Filter by years from dropdowns
+    // Validate year input: on typing, if value not in range or non-number, clear it
+    function validateYearInput(id) {
+      const input = document.getElementById(id);
+      let val = input.value.trim();
+      if (val === '') return;
+      const numVal = Number(val);
+      if (isNaN(numVal) || numVal < minYear || numVal > maxYear) {
+        input.value = '';
+      } else {
+        // Make sure input matches a valid suggestion in datalist (optional)
+        const validYears = uniqueYears;
+        if (!validYears.includes(numVal)) {
+          input.value = '';
+        }
+      }
+    }
+
+    // Apply filter reading from year inputs with datalist, validating values
     function applyYearFilter() {
-      const startYear = document.getElementById('startYearSelect').value;
-      const endYear = document.getElementById('endYearSelect').value;
-      let sYear = startYear === '' ? null : Number(startYear);
-      let eYear = endYear === '' ? null : Number(endYear);
+      const startYearInput = document.getElementById('startYearInput');
+      const endYearInput = document.getElementById('endYearInput');
+
+      let sYear = startYearInput.value === '' ? null : Number(startYearInput.value);
+      let eYear = endYearInput.value === '' ? null : Number(endYearInput.value);
 
       if (sYear === null && eYear === null) {
         filteredCardsData = allCardsData.slice();
@@ -440,14 +464,12 @@
         return;
       }
 
-      if (sYear !== null && eYear === null) {
-        eYear = sYear;
-      }
+      if (sYear !== null && eYear === null) eYear = sYear;
 
       if (sYear !== null && eYear !== null && eYear < sYear) {
         [sYear, eYear] = [eYear, sYear];
-        document.getElementById('startYearSelect').value = sYear;
-        document.getElementById('endYearSelect').value = eYear;
+        startYearInput.value = sYear;
+        endYearInput.value = eYear;
       }
 
       filteredCardsData = allCardsData.filter(card =>
@@ -461,8 +483,8 @@
     }
 
     function clearYearFilter() {
-      document.getElementById('startYearSelect').value = '';
-      document.getElementById('endYearSelect').value = '';
+      document.getElementById('startYearInput').value = '';
+      document.getElementById('endYearInput').value = '';
       filteredCardsData = allCardsData.slice();
       renderCards(filteredCardsData);
       alert('Year filter cleared. Showing all cards.');
@@ -489,7 +511,7 @@
         saveCardsToCache(allCardsData);
         filteredCardsData = [];
         extractYearsDetails(allCardsData);
-        populateYearDropdowns();
+        populateYearDatalist();
         renderCards(allCardsData);
         alert('Full data loaded! All cards updated.');
       } catch (err) {
@@ -504,7 +526,7 @@
         allCardsData = cached;
         filteredCardsData = [];
         extractYearsDetails(allCardsData);
-        populateYearDropdowns();
+        populateYearDatalist();
         renderCards(allCardsData);
       } else {
         loadFullData();
