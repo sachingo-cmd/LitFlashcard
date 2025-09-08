@@ -255,9 +255,11 @@
 
   <div class="controls" aria-label="Year filtering controls">
     <label for="startYearInput">Start Year:</label>
-    <input type="text" list="yearOptions" id="startYearInput" placeholder="Type year" autocomplete="off" inputmode="numeric" pattern="\d*" oninput="validateYearInput('startYearInput')" />
+    <input type="text" list="yearOptions" id="startYearInput" placeholder="Type year"
+           autocomplete="off" inputmode="numeric" oninput="handleYearInput('startYearInput')" />
     <label for="endYearInput">End Year:</label>
-    <input type="text" list="yearOptions" id="endYearInput" placeholder="Type year" autocomplete="off" inputmode="numeric" pattern="\d*" oninput="validateYearInput('endYearInput')" />
+    <input type="text" list="yearOptions" id="endYearInput" placeholder="Type year"
+           autocomplete="off" inputmode="numeric" oninput="handleYearInput('endYearInput')" />
     <datalist id="yearOptions"></datalist>
 
     <button onclick="applyYearFilter()">Filter</button>
@@ -286,15 +288,12 @@
 
     function csvToObjects(csv) {
       const data = Papa.parse(csv, { header: true, skipEmptyLines: true }).data;
-      return data.map(item => {
-        const parsedWorks = parseWorksWithYears(item.Works);
-        return {
-          ID: Number(item.ID),
-          ImageURL: item.ImageURL,
-          AuthorName: item.AuthorName,
-          Works: parsedWorks
-        };
-      });
+      return data.map(item => ({
+        ID: Number(item.ID),
+        ImageURL: item.ImageURL,
+        AuthorName: item.AuthorName,
+        Works: parseWorksWithYears(item.Works)
+      }));
     }
 
     function parseWorksWithYears(worksStr) {
@@ -302,11 +301,9 @@
       const parts = worksStr.split(';').map(s => s.trim()).filter(Boolean);
       return parts.map(workStr => {
         const match = workStr.match(/(.*)\s+\((\d{1,4})\)$/);
-        if (match) {
-          return { title: match[1].trim(), year: Number(match[2]) };
-        } else {
-          return { title: workStr, year: null };
-        }
+        return match
+          ? { title: match[1].trim(), year: Number(match[2]) }
+          : { title: workStr, year: null }
       });
     }
 
@@ -329,18 +326,17 @@
       };
       card.dataset.id = data.ID;
 
-      function worksListHTML(works) {
+      const worksListHTML = works => {
         const items = works.map(w => `<li>${w.year !== null ? w.title + ' (' + w.year + ')' : w.title}</li>`).join('');
         return `<ul class="works-list">${items}</ul>`;
-      }
+      };
 
-      let frontContent = '';
-      let backContent = '';
+      let frontContent, backContent;
 
       if (currentMode === 'author-front') {
         frontContent = `<img src="${data.ImageURL}" alt="Image of ${data.AuthorName}">`;
         backContent = `<strong>${data.AuthorName}</strong>${worksListHTML(data.Works)}`;
-      } else if (currentMode === 'work-front') {
+      } else {
         frontContent = `<strong style="margin-top: 20px; user-select:none;">Works:</strong>${worksListHTML(data.Works)}`;
         backContent = `
           <div class="work-front-back">
@@ -411,8 +407,7 @@
       });
       const yearsArray = Array.from(yearSet).sort((a, b) => a - b);
       if (yearsArray.length === 0) {
-        minYear = null;
-        maxYear = null;
+        minYear = null; maxYear = null;
       } else {
         minYear = yearsArray[0];
         maxYear = yearsArray[yearsArray.length - 1];
@@ -420,26 +415,37 @@
       uniqueYears = yearsArray;
     }
 
-    function validateYearInput(id) {
+    // Better validation allowing typing; only removes non-digits without restricting partial input immediately
+    function handleYearInput(id) {
       const input = document.getElementById(id);
-      let val = input.value.trim();
-      if (val === '') return;
-      // Remove non-digit chars
-      val = val.replace(/\D/g, '');
-      const numVal = Number(val);
-      if (isNaN(numVal) || numVal < minYear || numVal > maxYear) {
-        input.value = '';
-      } else {
-        input.value = numVal;
+      let val = input.value;
+      // Remove non-digit characters only
+      const cleaned = val.replace(/[^\d]/g, '');
+      if (val !== cleaned) {
+        const pos = input.selectionStart - (val.length - cleaned.length);
+        input.value = cleaned;
+        input.setSelectionRange(pos, pos);
       }
+      // No stricter immediate validation here; user can type freely
+      // Validation will happen on filter apply
     }
 
     function applyYearFilter() {
       const startYearInput = document.getElementById('startYearInput');
       const endYearInput = document.getElementById('endYearInput');
 
-      let sYear = startYearInput.value === '' ? null : Number(startYearInput.value);
-      let eYear = endYearInput.value === '' ? null : Number(endYearInput.value);
+      let sYear = startYearInput.value.trim() === '' ? null : Number(startYearInput.value.trim());
+      let eYear = endYearInput.value.trim() === '' ? null : Number(endYearInput.value.trim());
+
+      // Basic validity check for numbers and range
+      if (sYear !== null && (isNaN(sYear) || sYear < minYear || sYear > maxYear)) {
+        alert(`Start year must be a number between ${minYear} and ${maxYear}');
+        return;
+      }
+      if (eYear !== null && (isNaN(eYear) || eYear < minYear || eYear > maxYear)) {
+        alert(`End year must be a number between ${minYear} and ${maxYear}`);
+        return;
+      }
 
       if (sYear === null && eYear === null) {
         filteredCardsData = allCardsData.slice();
