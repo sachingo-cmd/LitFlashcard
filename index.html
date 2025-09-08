@@ -249,15 +249,14 @@
       if (!worksStr) return [];
       const parts = worksStr.split(';').map(s => s.trim()).filter(Boolean);
       const worksArray = parts.map(workStr => {
-        // Extract year inside parentheses
-        const match = workStr.match(/(.*)\s+\((\d{4})\)$/);
+        // Extract year inside parentheses allowing 1-4 digit years (e.g. 24, 405, 2023)
+        const match = workStr.match(/(.*)\s+$$(\d{1,4})$$$/);
         if (match) {
           return {
-            title: match[1].trim(),
-            year: Number(match[2])
+            title: match.trim(),
+            year: Number(match)
           };
         } else {
-          // If no year found, keep year as null (optional, can exclude later)
           return {
             title: workStr,
             year: null
@@ -293,11 +292,12 @@
       if (currentMode === 'author-front') {
         // Front: author image
         frontContent = `<img src="${data.ImageURL}" alt="Image of ${data.AuthorName}">`;
-        // Back: author name + all works listed
-        backContent = `<strong>${data.AuthorName}</strong><small>${data.Works.map(w => w.title).join('; ')}</small>`;
+        // Back: author name + all works with years listed
+        // Format: WorkTitle (Year)
+        backContent = `<strong>${data.AuthorName}</strong><small>${data.Works.map(w => w.year !== null ? w.title + ' (' + w.year + ')' : w.title).join('; ')}</small>`;
       } else if (currentMode === 'work-front') {
-        // Front: list all works titles joined by ;
-        frontContent = `<strong style="margin-top: 20px; user-select:none;">Works:</strong><small style="padding: 0 12px;">${data.Works.map(w => w.title).join('; ')}</small>`;
+        // Front: list all works titles with years joined by ;
+        frontContent = `<strong style="margin-top: 20px; user-select:none;">Works:</strong><small style="padding: 0 12px;">${data.Works.map(w => w.year !== null ? w.title + ' (' + w.year + ')' : w.title).join('; ')}</small>`;
         // Back: author image + author name below image
         backContent = `<img src="${data.ImageURL}" alt="Image of ${data.AuthorName}"><strong style="margin-top: 8px; color: #333;">${data.AuthorName}</strong>`;
       }
