@@ -5,28 +5,54 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Author Flashcards</title>
   <style>
+    /* Color palette as requested */
+    :root {
+      --color-terracotta: #b8483c;
+      --color-goldenrod: #b8a245;
+      --color-charcoal: #3c393e;
+      --color-sage: #a6bd9e;
+      --color-taupe: #9c705d;
+
+      --background-light: #fbf9f6;
+      --text-primary: #4a433f;
+      --text-secondary: #6e5a48;
+      --card-bg: #ffffff;
+      --card-shadow-color: rgba(167, 189, 158, 0.3);
+      --flip-back-bg: #e8f0e8;
+
+      --button-bg: var(--color-terracotta);
+      --button-hover-bg: var(--color-goldenrod);
+      --button-text: #ffffff;
+
+      --border-color: var(--color-taupe);
+    }
+
     body {
       font-family: Arial, sans-serif;
-      background: #f0f0f0;
+      background: var(--background-light);
       margin: 0;
       padding: 0;
+      color: var(--text-primary);
     }
+
     header {
       padding: 10px 20px;
-      background: #3979c2;
-      color: white;
+      background: var(--color-terracotta);
+      color: var(--button-text);
       text-align: left;
-      position: relative;
       display: flex;
       flex-direction: column;
       gap: 4px;
       user-select: none;
     }
+
     #authorCount, #worksCount {
       font-size: 16px;
       font-weight: bold;
       user-select: none;
+      color: var(--button-text);
     }
+
     .container {
       display: flex;
       flex-wrap: wrap;
@@ -34,6 +60,7 @@
       justify-content: center;
       margin: 20px;
     }
+
     .flip-card {
       background: transparent;
       width: 175px;
@@ -44,7 +71,9 @@
       margin-bottom: 16px;
       display: flex;
       flex-direction: column;
+      user-select: none;
     }
+
     .flip-card-inner {
       position: relative;
       width: 100%;
@@ -52,24 +81,28 @@
       transition: transform 0.6s;
       transform-style: preserve-3d;
       border-radius: 12px;
-      box-shadow: 2px 2px 12px #bbb;
-      border: 1px solid #aaa;
+      box-shadow: 2px 2px 12px var(--card-shadow-color);
+      border: 1px solid var(--border-color);
       box-sizing: border-box;
       overflow: visible;
       display: flex;
       flex-direction: column;
-      background: #fff;
+      background: var(--card-bg);
     }
+
     .flip-card.flipped .flip-card-inner {
       transform: rotateY(180deg);
     }
+
     .flip-card.expanded {
       min-height: 294px;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 8px 16px rgba(156,112,93,0.46);
     }
+
     .flip-card.expanded .flip-card-inner {
       min-height: 294px;
     }
+
     .flip-card-front, .flip-card-back {
       position: absolute;
       width: 100%;
@@ -84,12 +117,14 @@
       overflow: hidden;
       padding: 0;
     }
+
     .flip-card-front {
-      background: #fff;
+      background: var(--card-bg);
       justify-content: center;
       z-index: 2;
       overflow-y: auto;
     }
+
     .flip-card-front img {
       max-width: calc(100% - 2px);
       max-height: calc(100% - 2px);
@@ -100,31 +135,37 @@
       user-select: none;
       margin: auto;
       display: block;
+      box-shadow: 0 0 8px var(--color-sage);
     }
+
     .flip-card-back {
-      background: #e6f3ff;
+      background: var(--flip-back-bg);
       transform: rotateY(180deg);
       text-align: left;
       padding: 20px 24px;
       overflow-y: auto;
-      color: #333;
+      color: var(--text-primary);
       justify-content: flex-start;
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
+      box-shadow: inset 0 0 12px var(--color-sage);
     }
+
     .back-author-name-centered {
       display: flex;
       flex-direction: column;
       align-items: center;
       margin-top: 8px;
-      color: #333;
-      font-weight: bold;
+      color: var(--color-charcoal);
+      font-weight: 700;
       font-size: 18px;
       user-select: none;
+      text-shadow: 1px 1px 0 var(--color-taupe);
     }
+
     .work-front-back img {
       max-width: 130px;
       max-height: 180px;
@@ -135,57 +176,88 @@
       user-select: none;
       margin: 0 auto;
       display: block;
+      box-shadow: 0 3px 10px var(--color-sage);
     }
+
     .flip-card-back strong {
       display: block;
       font-size: 20px;
       margin-bottom: 12px;
       user-select: none;
+      color: var(--color-terracotta);
     }
+
     .works-list {
       padding-left: 18px;
       margin: 0;
       font-size: 16px;
-      line-height: 1.4;
+      line-height: 1.5;
       user-select: text;
       max-height: 180px;
-      overflow-y: auto;
+      overflow: auto;
+      color: var(--color-taupe);
+      text-shadow: 0 0 1px white;
     }
+
     .works-list li {
-      margin-bottom: 4px;
+      margin-bottom: 6px;
     }
+
     button {
-      margin: 12px 8px 12px 8px;
+      margin: 12px 8px;
       padding: 10px 22px;
       font-size: 16px;
       border-radius: 6px;
       border: none;
-      background: #3979c2;
-      color: #fff;
+      background: var(--button-bg);
+      color: var(--button-text);
       cursor: pointer;
-      transition: background 0.3s ease;
+      transition: background 0.3s ease, box-shadow 0.3s ease;
       user-select: none;
+      box-shadow: 0 4px 8px var(--color-goldenrod);
     }
+
     button:hover {
-      background: #295595;
+      background: var(--button-hover-bg);
+      box-shadow: 0 6px 14px var(--color-terracotta);
+      color: var(--button-text);
     }
+
     input[type="text"] {
       width: 80px;
       font-size: 16px;
       padding: 6px 12px;
       border-radius: 6px;
-      border: 1px solid #aaa;
-      background: white;
+      border: 1px solid var(--border-color);
+      background: var(--card-bg);
       margin: 12px 6px;
       user-select: text;
       box-sizing: border-box;
+      color: var(--text-primary);
       cursor: text;
+      box-shadow: inset 0 1px 3px var(--color-sage);
+      transition: border-color 0.3s ease;
     }
+
+    input[type="text"]::placeholder {
+      color: var(--color-taupe);
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--color-terracotta);
+      outline: none;
+      box-shadow: 0 0 6px var(--color-terracotta);
+      background: #fffefa;
+    }
+
     label {
-      font-weight: bold;
+      font-weight: 700;
       margin-left: 10px;
       user-select: none;
+      color: var(--text-primary);
+      text-shadow: 0 0 1px var(--color-taupe);
     }
+
     @media (max-width: 600px) {
       .flip-card {
         width: 140px;
@@ -200,6 +272,7 @@
       .flip-card-back {
         font-size: 14px;
         padding: 14px 18px;
+        color: var(--text-primary);
       }
       button, input[type="text"], select {
         font-size: 14px;
@@ -219,17 +292,18 @@
         max-width: 200px;
       }
     }
+
     .controls {
       text-align: center;
-      margin: 15px 0 10px 0;
+      margin: 15px 0 10px;
       position: relative;
     }
+
     .controls > * {
       vertical-align: middle;
       user-select: none;
     }
   </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 </head>
 <body>
   <header>
@@ -246,35 +320,39 @@
     <button onclick="loadFullData()">Rescan</button>
   </div>
   <div class="controls" aria-label="Year filtering controls">
-    <label for="startYearInput">Start Year:</label>
+    <label for="startYearInput">Start Year</label>
     <input type="text" list="yearOptions" id="startYearInput" placeholder="Type year"
            autocomplete="off" inputmode="numeric" oninput="handleYearInput('startYearInput')" />
-    <label for="endYearInput">End Year:</label>
+    <label for="endYearInput">End Year</label>
     <input type="text" list="yearOptions" id="endYearInput" placeholder="Type year"
            autocomplete="off" inputmode="numeric" oninput="handleYearInput('endYearInput')" />
     <datalist id="yearOptions"></datalist>
     <button onclick="applyYearFilter()">Filter</button>
-    <button onclick="clearYearFilter()">Clear Filter</button>
+    <button onclick="clearYearFilter()">Clear</button>
   </div>
-  <div class="controls" aria-label="Quiz mode toggle">
-    <label for="modeToggle">Show Mode:</label>
+  <div class="controls" aria-label="Display mode toggle">
+    <label for="modeToggle">Display Mode</label>
     <select id="modeToggle" onchange="changeMode()">
-      <option value="author-front">Author Image Front</option>
-      <option value="work-front">Work Title Front</option>
+      <option value="author-front">Author Image</option>
+      <option value="work-front">Work Title</option>
     </select>
   </div>
   <div class="container" id="cardContainer" aria-live="polite" aria-relevant="additions removals"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.3.0/papaparse.min.js"></script>
   <script>
-    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT7cWnraaDNjm3MW4tUeVrVftj6iEBYwNkGZ7WsJsQfte3rbRhr1AF43fbIyVe1-ZMtvRVZgDrwusrT/pub?output=csv';
-    const STORAGE_KEY = 'authorFlashcardsCache';
+    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1/wxyz/pub?output=csv'; // Use the actual CSV URL
+    const STORAGE_KEY = 'authorFlashcardsData';
+
     let allCardsData = [];
     let filteredCardsData = [];
     let currentMode = 'author-front';
     let uniqueYears = [];
     let minYear = null;
     let maxYear = null;
+
     function csvToObjects(csv) {
-      const data = Papa.parse(csv, { header: true, skipEmptyLines: true }).data;
+      const data = Papa.parse(csv, {header: true, skipEmptyLines: true}).data;
       return data.map(item => ({
         ID: Number(item.ID),
         ImageURL: item.ImageURL,
@@ -282,199 +360,175 @@
         Works: parseWorksWithYears(item.Works)
       }));
     }
+
     function parseWorksWithYears(worksStr) {
       if (!worksStr) return [];
       const parts = worksStr.split(';').map(s => s.trim()).filter(Boolean);
-      return parts.map(workStr => {
-        const match = workStr.match(/(.*)\s+\((\d{1,4})\)$/);
-        return match
-          ? { title: match[1].trim(), year: Number(match[2]) }
-          : { title: workStr, year: null }
+      return parts.map(w => {
+        const match = w.match(/(.*)\s+\((\d{4})\)$/);
+        return match ? {title: match[1].trim(), year: Number(match[2])} : {title: w, year: null};
       });
     }
-    function renderCards(cardsData) {
+
+    function renderCards(cards) {
       const container = document.getElementById('cardContainer');
       container.innerHTML = '';
-      cardsData.forEach(data => {
-        container.appendChild(renderCard(data));
+      cards.forEach(card => {
+        container.appendChild(createCard(card));
       });
-      updateAuthorCount(allCardsData.length);
-      updateWorksCount(calculateWorksCount(allCardsData));
+      updateCounts();
     }
-    function renderCard(data) {
-      const card = document.createElement('div');
-      card.className = 'flip-card';
-      card.onclick = () => {
-        card.classList.toggle('flipped');
-        card.classList.toggle('expanded');
+
+    function createCard(card) {
+      const el = document.createElement('div');
+      el.className = 'flip-card';
+      el.dataset.id = card.ID;
+      el.onclick = () => el.classList.toggle('flipped') || el.classList.toggle('expanded');
+
+      const worksHTML = card => {
+        if (!card.Works.length) return '<p>No works available.</p>';
+        let list = card.Works.map(w => `<li>${w.title} ${w.year ? '(' + w.year + ')' : ''}</li>`).join('');
+        return `<ul class="works-list">${list}</ul>`;
       };
-      card.dataset.id = data.ID;
-      const worksListHTML = works => {
-        const items = works.map(w => `<li>${w.year !== null ? w.title + ' (' + w.year + ')' : w.title}</li>`).join('');
-        return `<ul class="works-list">${items}</ul>`;
-      };
-      let frontContent, backContent;
+
+      let front, back;
       if (currentMode === 'author-front') {
-        frontContent = `<img src="${data.ImageURL}" alt="Image of ${data.AuthorName}">`;
-        backContent = `<strong>${data.AuthorName}</strong>${worksListHTML(data.Works)}`;
+        front = `<img src="${card.ImageURL}" alt="Image of ${card.AuthorName}">`;
+        back = `<strong>${card.AuthorName}</strong>${worksHTML(card)}`;
       } else {
-        frontContent = `<strong style="margin-top: 20px; user-select:none;">Works:</strong>${worksListHTML(data.Works)}`;
-        backContent = `
-          <div class="work-front-back">
-            <img src="${data.ImageURL}" alt="Image of ${data.AuthorName}">
-            <div class="back-author-name-centered">${data.AuthorName}</div>
-          </div>`;
+        front = `<strong style="margin-top:20px">${worksHTML(card)}</strong>`;
+        back = `<div class="work-front-back"><img src="${card.ImageURL}" alt="Image of ${card.AuthorName}"><div class="back-author-name-centered">${card.AuthorName}</div></div>`;
       }
-      card.innerHTML = `
+
+      el.innerHTML = `
         <div class="flip-card-inner">
-          <div class="flip-card-front">${frontContent}</div>
-          <div class="flip-card-back">${backContent}</div>
-        </div>`;
-      return card;
+          <div class="flip-card-front">${front}</div>
+          <div class="flip-card-back">${back}</div>
+        </div>
+      `;
+      return el;
     }
-    function updateAuthorCount(count) {
-      document.getElementById('authorCount').textContent = `Authors Registered: ${count}`;
+
+    function updateCounts() {
+      document.getElementById('authorCount').textContent = `Authors Registered: ${allCardsData.length}`;
+      document.getElementById('worksCount').textContent = `Works Registered: ${allCardsData.reduce((a,c) => a+c.Works.length, 0)}`;
     }
-    function calculateWorksCount(cards) {
-      return cards.reduce((acc, card) => acc + card.Works.length, 0);
-    }
-    function updateWorksCount(count) {
-      document.getElementById('worksCount').textContent = `Works Registered: ${count}`;
-    }
-    function loadCachedCards() {
-      const data = localStorage.getItem(STORAGE_KEY);
-      if (!data) return [];
+
+    function loadCachedData() {
       try {
-        return JSON.parse(data);
+        const cached = localStorage.getItem(STORAGE_KEY);
+        return cached ? JSON.parse(cached) : [];
       } catch {
         return [];
       }
     }
-    function saveCardsToCache(cards) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+
+    function saveCachedData(data) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
+
+    async function loadFullData() {
+      try {
+        const res = await fetch(CSV_URL);
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+        const csv = await res.text();
+        allCardsData = csvToObjects(csv);
+        saveCachedData(allCardsData);
+        filteredCardsData = [];
+        extractYears();
+        renderCards(allCardsData);
+        populateYearOptions();
+        alert('Data loaded.');
+      } catch(e) {
+        alert('Failed loading data: ' + e.message);
+      }
+    }
+
+    function extractYears() {
+      let yearsSet = new Set();
+      allCardsData.forEach(a => a.Works.forEach(w => w.year && yearsSet.add(w.year)));
+      const years = Array.from(yearsSet).sort((a,b) => a-b);
+      minYear = years[0] || null;
+      maxYear = years[years.length -1] || null;
+    }
+
+    function populateYearOptions() {
+      const datalist = document.getElementById('yearOptions');
+      datalist.innerHTML = '';
+      if (!minYear || !maxYear) return;
+      for(let y = minYear; y<=maxYear; y++) {
+        const option = document.createElement('option');
+        option.value = y;
+        datalist.appendChild(option);
+      }
+    }
+
+    function handleYearInput(id) {
+      const input = document.getElementById(id);
+      input.value = input.value.replace(/[^\d]/g, '');
+    }
+
+    function applyFilter() {
+      const start = document.getElementById('startYearInput').value;
+      const end = document.getElementById('endYearInput').value;
+      const sYear = start ? parseInt(start) : minYear;
+      const eYear = end ? parseInt(end) : maxYear;
+
+      if (isNaN(sYear) || isNaN(eYear) || sYear > eYear || sYear < minYear || eYear > maxYear) {
+        alert(`Enter valid years between ${minYear} and ${maxYear}`);
+        return;
+      }
+
+      filteredCardsData = allCardsData.filter(card =>
+        card.Works.some(w => w.year >= sYear && w.year <= eYear)
+      );
+      renderCards(filteredCardsData);
+      alert(`Filtered works from ${sYear} to ${eYear}`);
+    }
+
+    function clearFilter() {
+      document.getElementById('startYearInput').value = '';
+      document.getElementById('endYearInput').value = '';
+      filteredCardsData = [];
+      renderCards(allCardsData);
+      alert('Filter cleared');
+    }
+
     function resetCards() {
       document.querySelectorAll('.flip-card').forEach(card => {
         card.classList.remove('flipped');
         card.classList.remove('expanded');
       });
-      alert('All cards flipped to front.');
+      alert('All cards reset');
     }
-    function populateYearDatalist() {
-      const datalist = document.getElementById('yearOptions');
-      datalist.innerHTML = '';
-      if (minYear === null || maxYear === null) return;
-      for (let year = minYear; year <= maxYear; year++) {
-        const option = document.createElement('option');
-        option.value = year;
-        datalist.appendChild(option);
-      }
-    }
-    function extractYearsDetails(cards) {
-      const yearSet = new Set();
-      cards.forEach(card => {
-        card.Works.forEach(w => {
-          if (typeof w.year === 'number' && !isNaN(w.year)) yearSet.add(w.year);
-        });
-      });
-      const yearsArray = Array.from(yearSet).sort((a, b) => a - b);
-      if (yearsArray.length === 0) {
-        minYear = null;
-        maxYear = null;
-      } else {
-        minYear = yearsArray[0];
-        maxYear = yearsArray[yearsArray.length - 1];
-      }
-      uniqueYears = yearsArray;
-    }
-    function handleYearInput(id) {
-      const input = document.getElementById(id);
-      let val = input.value;
-      // Remove non-digit characters but allow typing
-      const cleaned = val.replace(/[^\d]/g, '');
-      if (val !== cleaned) {
-        const pos = input.selectionStart - (val.length - cleaned.length);
-        input.value = cleaned;
-        input.setSelectionRange(pos, pos);
-      }
-    }
-    function applyYearFilter() {
-      const startYearInput = document.getElementById('startYearInput');
-      const endYearInput = document.getElementById('endYearInput');
-      let sYear = startYearInput.value.trim() === '' ? null : Number(startYearInput.value.trim());
-      let eYear = endYearInput.value.trim() === '' ? null : Number(endYearInput.value.trim());
-      if (sYear !== null && (isNaN(sYear) || sYear < minYear || sYear > maxYear)) {
-        alert(`Start year must be a number between ${minYear} and ${maxYear}`);
-        return;
-      }
-      if (eYear !== null && (isNaN(eYear) || eYear < minYear || eYear > maxYear)) {
-        alert(`End year must be a number between ${minYear} and ${maxYear}`);
-        return;
-      }
-      if (sYear === null && eYear === null) {
-        filteredCardsData = allCardsData.slice();
-        renderCards(filteredCardsData);
-        alert('No year filter selected. Showing all cards.');
-        return;
-      }
-      if (sYear !== null && eYear === null) eYear = sYear;
-      if (sYear !== null && eYear !== null && eYear < sYear) {
-        [sYear, eYear] = [eYear, sYear];
-        startYearInput.value = sYear;
-        endYearInput.value = eYear;
-      }
-      filteredCardsData = allCardsData.filter(card =>
-        card.Works.some(w =>
-          typeof w.year === 'number' && w.year >= sYear && w.year <= eYear
-        )
-      );
-      renderCards(filteredCardsData);
-      alert(`Showing cards with works from ${sYear} to ${eYear}.`);
-    }
-    function clearYearFilter() {
-      document.getElementById('startYearInput').value = '';
-      document.getElementById('endYearInput').value = '';
-      filteredCardsData = allCardsData.slice();
-      renderCards(filteredCardsData);
-      alert('Year filter cleared. Showing all cards.');
-    }
+
     function changeMode() {
-      const modeSelect = document.getElementById('modeToggle');
-      currentMode = modeSelect.value;
-      if (filteredCardsData.length > 0) {
+      currentMode = document.getElementById('modeToggle').value;
+      if(filteredCardsData.length) {
         renderCards(filteredCardsData);
       } else {
         renderCards(allCardsData);
       }
     }
-    async function loadFullData() {
-      try {
-        const response = await fetch(CSV_URL);
-        if (!response.ok) throw new Error(`Network response not ok ${response.status}`);
-        const csvText = await response.text();
-        allCardsData = csvToObjects(csvText);
-        saveCardsToCache(allCardsData);
-        filteredCardsData = [];
-        extractYearsDetails(allCardsData);
-        populateYearDatalist();
-        renderCards(allCardsData);
-        alert('Full data loaded! All cards updated.');
-      } catch (err) {
-        alert('Error loading full data: ' + err.message);
-      }
-    }
-    document.addEventListener('DOMContentLoaded', () => {
-      const cached = loadCachedCards();
-      if (cached.length > 0) {
+
+    window.loadFullData = loadFullData;
+    window.resetCards = resetCards;
+    window.applyFilter = applyFilter;
+    window.clearFilter = clearFilter;
+    window.handleYearInput = handleYearInput;
+    window.changeMode = changeMode;
+
+    window.onload = () => {
+      let cached = loadCachedData();
+      if(cached && cached.length>0){
         allCardsData = cached;
-        filteredCardsData = [];
-        extractYearsDetails(allCardsData);
-        populateYearDatalist();
+        extractYears();
+        populateYearOptions();
         renderCards(allCardsData);
       } else {
         loadFullData();
       }
-    });
+    }
   </script>
 </body>
 </html>
