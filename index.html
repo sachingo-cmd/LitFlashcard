@@ -3,108 +3,37 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Author Flashcards & Quiz</title>
+  <title>Author Flashcards</title>
   <style>
-    /* Color palette from request */
-    :root {
-      --color-terracotta: #b8483c; /* (184,72,60) */
-      --color-goldenrod: #b8a245; /* (184,162,69) */
-      --color-charcoal: #3c393e; /* (60,57,62) */
-      --color-sage: #a6bd9e; /* (166,189,158) */
-      --color-taupe: #9c705d; /* (156,112,93) */
-
-      --bg-light: #f7f8f6;
-      --text-dark: var(--color-charcoal);
-      --text-light: #fff;
-
-      --btn-bg: var(--color-terracotta);
-      --btn-hover-bg: #91342e;
-      --btn-text: var(--text-light);
-
-      --header-bg: var(--color-charcoal);
-      --header-text: var(--text-light);
-
-      --card-bg: #fff;
-      --card-shadow: rgba(60, 57, 62, 0.15);
-    }
-
-    /* Reset and base */
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: var(--bg-light);
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
       margin: 0;
       padding: 0;
-      color: var(--text-dark);
-      min-height: 100vh;
+    }
+    header {
+      padding: 10px 20px;
+      background: #3979c2;
+      color: white;
+      text-align: left;
+      position: relative;
       display: flex;
       flex-direction: column;
-      align-items: center;
+      gap: 4px;
       user-select: none;
     }
-
-    header {
-      background-color: var(--header-bg);
-      color: var(--header-text);
-      width: 100%;
-      padding: 16px 24px;
-      box-sizing: border-box;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-    }
-    header h2 {
-      margin: 0;
-      font-weight: 700;
-      font-size: 1.4rem;
+    #authorCount, #worksCount {
+      font-size: 16px;
+      font-weight: bold;
       user-select: none;
     }
-    header nav a {
-      color: var(--btn-text);
-      font-weight: 600;
-      text-decoration: none;
-      border: 2px solid var(--btn-text);
-      padding: 6px 14px;
-      border-radius: 8px;
-      user-select: none;
-      transition: background-color 0.2s ease;
-    }
-    header nav a:hover,
-    header nav a:focus {
-      background-color: var(--btn-text);
-      color: var(--header-bg);
-      outline: none;
-    }
-
-    /* Container for flashcards and quiz */
-    main {
-      max-width: 1100px;
-      width: 90vw;
-      margin: 20px auto 40px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      justify-content: center;
-      align-items: flex-start;
-    }
-
-    /* Flashcards container */
     .container {
-      flex: 1 1 520px;
       display: flex;
       flex-wrap: wrap;
       gap: 16px;
       justify-content: center;
-      max-height: 80vh;
-      overflow-y: auto;
-      background: var(--card-bg);
-      box-shadow: 0 4px 16px var(--card-shadow);
-      border-radius: 14px;
-      padding: 16px;
+      margin: 20px;
     }
-
-    /* Each flashcard */
     .flip-card {
       background: transparent;
       width: 175px;
@@ -115,8 +44,6 @@
       margin-bottom: 16px;
       display: flex;
       flex-direction: column;
-      user-select: none;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     }
     .flip-card-inner {
       position: relative;
@@ -125,20 +52,20 @@
       transition: transform 0.6s;
       transform-style: preserve-3d;
       border-radius: 12px;
-      box-shadow: 2px 2px 12px rgba(60,57,62,0.15);
-      border: 1px solid #ccc;
+      box-shadow: 2px 2px 12px #bbb;
+      border: 1px solid #aaa;
       box-sizing: border-box;
+      overflow: visible;
       display: flex;
       flex-direction: column;
-      background: var(--card-bg);
-      overflow: visible;
+      background: #fff;
     }
     .flip-card.flipped .flip-card-inner {
       transform: rotateY(180deg);
     }
     .flip-card.expanded {
       min-height: 294px;
-      box-shadow: 0 8px 16px rgba(60,57,62,0.25);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
     }
     .flip-card.expanded .flip-card-inner {
       min-height: 294px;
@@ -156,10 +83,9 @@
       align-items: center;
       overflow: hidden;
       padding: 0;
-      user-select: none;
     }
     .flip-card-front {
-      background: var(--card-bg);
+      background: #fff;
       justify-content: center;
       z-index: 2;
       overflow-y: auto;
@@ -171,239 +97,182 @@
       box-sizing: border-box;
       object-fit: contain;
       border-radius: 12px;
-      margin: auto;
       user-select: none;
+      margin: auto;
       display: block;
     }
     .flip-card-back {
-      background: var(--color-sage);
+      background: #e6f3ff;
       transform: rotateY(180deg);
       text-align: left;
       padding: 20px 24px;
       overflow-y: auto;
-      color: var(--color-charcoal);
+      color: #333;
       justify-content: flex-start;
       position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+    }
+    .back-author-name-centered {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 8px;
+      color: #333;
+      font-weight: bold;
+      font-size: 18px;
+      user-select: none;
+    }
+    .work-front-back img {
+      max-width: 130px;
+      max-height: 180px;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      border-radius: 12px;
+      user-select: none;
+      margin: 0 auto;
+      display: block;
     }
     .flip-card-back strong {
       display: block;
       font-size: 20px;
       margin-bottom: 12px;
       user-select: none;
-      font-weight: 700;
     }
     .works-list {
       padding-left: 18px;
       margin: 0;
       font-size: 16px;
       line-height: 1.4;
+      user-select: text;
       max-height: 180px;
       overflow-y: auto;
-      color: var(--color-charcoal);
     }
     .works-list li {
       margin-bottom: 4px;
     }
-
-    /* Quiz Container */
-    aside.quiz-container {
-      max-width: 450px;
-      width: 100%;
-      background: var(--card-bg);
-      border-radius: 14px;
-      box-shadow: 0 4px 16px var(--card-shadow);
-      padding: 20px 28px;
-      display: flex;
-      flex-direction: column;
-      user-select: none;
-    }
-    aside.quiz-container h3 {
-      margin: 0 0 16px 0;
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--color-terracotta);
-      text-align: center;
-      user-select: text;
-    }
-    .quiz-work-title {
-      font-weight: 600;
-      font-size: 1.2rem;
-      margin-bottom: 20px;
-      min-height: 60px;
-      text-align: center;
-      color: var(--color-charcoal);
-      user-select: text;
-    }
-    input[type="text"].quiz-input {
-      font-size: 18px;
-      padding: 10px 12px;
-      border-radius: 8px;
-      border: 2px solid var(--color-taupe);
-      margin-bottom: 12px;
-      width: 100%;
-      box-sizing: border-box;
-      transition: border-color 0.3s;
-    }
-    input[type="text"].quiz-input:focus {
-      outline: none;
-      border-color: var(--color-terracotta);
-      background: #fffdeb;
-    }
-    button.quiz-btn {
-      background: var(--btn-bg);
+    button {
+      margin: 12px 8px 12px 8px;
+      padding: 10px 22px;
+      font-size: 16px;
+      border-radius: 6px;
       border: none;
-      color: var(--btn-text);
-      padding: 12px 0;
-      border-radius: 8px;
-      font-size: 1.1rem;
+      background: #3979c2;
+      color: #fff;
       cursor: pointer;
+      transition: background 0.3s ease;
       user-select: none;
-      margin-bottom: 12px;
-      transition: background-color 0.3s ease;
     }
-    button.quiz-btn:hover:not(:disabled) {
-      background: var(--btn-hover-bg);
+    button:hover {
+      background: #295595;
     }
-    button.quiz-btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    .quiz-feedback {
-      text-align: center;
-      font-weight: 700;
-      min-height: 36px;
-      margin-bottom: 12px;
-      font-size: 1rem;
-    }
-    .quiz-feedback.correct {
-      color: var(--color-terracotta);
-    }
-    .quiz-feedback.wrong {
-      color: var(--color-taupe);
-    }
-    .quiz-hint {
-      font-style: italic;
-      color: var(--color-taupe);
-      text-align: center;
-      min-height: 28px;
-      margin-bottom: 12px;
+    input[type="text"] {
+      width: 80px;
+      font-size: 16px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid #aaa;
+      background: white;
+      margin: 12px 6px;
       user-select: text;
-    }
-    .quiz-progress {
-      font-size: 0.9rem;
-      text-align: center;
-      margin-bottom: 12px;
-      color: var(--color-charcoal);
-      user-select: none;
-    }
-
-    /* Controls */
-    .controls {
-      width: 100%;
-      max-width: 1100px;
-      padding: 0 20px;
-      margin-bottom: 12px;
       box-sizing: border-box;
-      display: flex;
-      justify-content: center;
-      gap: 12px;
+      cursor: text;
     }
-    .controls button {
-      background-color: var(--color-goldenrod);
-      border: none;
-      color: var(--color-charcoal);
-      font-weight: 700;
-      padding: 10px 20px;
-      border-radius: 8px;
-      cursor: pointer;
+    label {
+      font-weight: bold;
+      margin-left: 10px;
       user-select: none;
-      transition: background-color 0.3s ease;
-      box-shadow: 1px 2px 4px rgba(156,112,93,0.7);
-      font-size: 1rem;
     }
-    .controls button:hover {
-      background-color: var(--color-taupe);
-      color: var(--color-light, #fff);
-    }
-
-    /* Responsive adjustments */
-    @media (max-width: 1000px) {
-      main {
+    @media (max-width: 600px) {
+      .flip-card {
+        width: 140px;
+        margin-bottom: 14px;
+      }
+      .flip-card.expanded {
+        min-height: 252px;
+      }
+      .flip-card-front img {
+        max-height: calc(100% - 2px);
+      }
+      .flip-card-back {
+        font-size: 14px;
+        padding: 14px 18px;
+      }
+      button, input[type="text"], select {
+        font-size: 14px;
+        padding: 8px 16px;
+        margin: 8px 6px;
+      }
+      .controls[aria-label="Year filtering controls"] {
+        display: flex;
         flex-direction: column;
+        gap: 8px;
         align-items: center;
       }
-      .container, aside.quiz-container {
-        max-width: 100%;
-        width: 90vw;
+      .controls[aria-label="Year filtering controls"] label,
+      .controls[aria-label="Year filtering controls"] input[type="text"],
+      .controls[aria-label="Year filtering controls"] button {
+        width: 80%;
+        max-width: 200px;
       }
     }
+    .controls {
+      text-align: center;
+      margin: 15px 0 10px 0;
+      position: relative;
+    }
+    .controls > * {
+      vertical-align: middle;
+      user-select: none;
+    }
   </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 </head>
 <body>
   <header>
-    <h2>Author Flashcards & Quiz</h2>
-    <nav>
-      <a href="https://sachingo-cmd.github.io/UGC-NET-English-Literature-Flash-Info/" target="_blank" rel="noopener noreferrer" aria-label="Open UGC-NET English Literature Flash Info in new tab">UGC-NET English Lit Flash Info</a>
-    </nav>
+    <div style="display:flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+      <h2 style="margin: 0; flex-grow: 1;">Author Flashcards</h2>
+      <div style="min-width:160px; text-align: right;">
+        <div id="authorCount" aria-live="polite" aria-atomic="true"></div>
+        <div id="worksCount" aria-live="polite" aria-atomic="true"></div>
+      </div>
+    </div>
   </header>
-
-  <div class="controls" role="region" aria-label="Global controls">
-    <button type="button" onclick="resetCards()">Reset Cards</button>
-    <button type="button" onclick="loadFullData()">Reload All Data</button>
-    <button type="button" onclick="startQuiz()">Start Quiz Mode</button>
-    <button type="button" onclick="exitQuiz()" id="exitQuizBtn" style="display:none;">Exit Quiz Mode</button>
+  <div class="controls">
+    <button onclick="resetCards()">Reset</button>
+    <button onclick="loadFullData()">Rescan</button>
   </div>
-
-  <main>
-    <section class="container" id="cardContainer" aria-live="polite" aria-label="Author Flashcards"></section>
-
-    <aside class="quiz-container" id="quizContainer" hidden aria-live="assertive" aria-label="Author Work Quiz">
-      <h3>Quiz Mode: Identify the Author</h3>
-      <div class="quiz-work-title" id="quizWorkTitle" aria-live="polite"></div>
-      <input type="text" id="quizAnswerInput" class="quiz-input" placeholder="Type author name here" aria-label="Type author name here" autocomplete="off" />
-      <button class="quiz-btn" id="quizSubmitBtn" type="button">Submit Answer</button>
-      <div class="quiz-feedback" id="quizFeedback" role="alert"></div>
-      <div class="quiz-hint" id="quizHint"></div>
-      <div class="quiz-progress" id="quizProgress"></div>
-      <button class="quiz-btn" id="quizNextBtn" type="button" disabled>Next Work</button>
-    </aside>
-  </main>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.6.2/fuse.min.js" 
-          integrity="sha512-CRZ46qY7I+LCCRuNHLhFbXzV6OicHKWqSxlwSpR8hyQGO4gAfGFiDVqB/taxoXyNWO7cRTiqLaqocRgBoN68mw==" 
-          crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
-
+  <div class="controls" aria-label="Year filtering controls">
+    <label for="startYearInput">Start Year:</label>
+    <input type="text" list="yearOptions" id="startYearInput" placeholder="Type year"
+           autocomplete="off" inputmode="numeric" oninput="handleYearInput('startYearInput')" />
+    <label for="endYearInput">End Year:</label>
+    <input type="text" list="yearOptions" id="endYearInput" placeholder="Type year"
+           autocomplete="off" inputmode="numeric" oninput="handleYearInput('endYearInput')" />
+    <datalist id="yearOptions"></datalist>
+    <button onclick="applyYearFilter()">Filter</button>
+    <button onclick="clearYearFilter()">Clear Filter</button>
+  </div>
+  <div class="controls" aria-label="Quiz mode toggle">
+    <label for="modeToggle">Show Mode:</label>
+    <select id="modeToggle" onchange="changeMode()">
+      <option value="author-front">Author Image Front</option>
+      <option value="work-front">Work Title Front</option>
+    </select>
+  </div>
+  <div class="container" id="cardContainer" aria-live="polite" aria-relevant="additions removals"></div>
   <script>
     const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT7cWnraaDNjm3MW4tUeVrVftj6iEBYwNkGZ7WsJsQfte3rbRhr1AF43fbIyVe1-ZMtvRVZgDrwusrT/pub?output=csv';
     const STORAGE_KEY = 'authorFlashcardsCache';
-
-    // Flashcard Data
     let allCardsData = [];
-    let currentMode = 'author-front'; // keeps your original mode (unused now)
-    const cardContainer = document.getElementById('cardContainer');
-
-    // Quiz Mode Data & Elements
-    let quizData = [];
-    let quizIndex = 0;
-    let quizAttempts = 0;
-    const maxHints = 3;
-    let fuse;
-    let quizActive = false;
-
-    const quizContainer = document.getElementById('quizContainer');
-    const quizWorkTitle = document.getElementById('quizWorkTitle');
-    const quizAnswerInput = document.getElementById('quizAnswerInput');
-    const quizSubmitBtn = document.getElementById('quizSubmitBtn');
-    const quizFeedback = document.getElementById('quizFeedback');
-    const quizHint = document.getElementById('quizHint');
-    const quizProgress = document.getElementById('quizProgress');
-    const quizNextBtn = document.getElementById('quizNextBtn');
-    const exitQuizBtn = document.getElementById('exitQuizBtn');
-
-    // ------------------ Flashcard rendering (unchanged) ------------------
-
+    let filteredCardsData = [];
+    let currentMode = 'author-front';
+    let uniqueYears = [];
+    let minYear = null;
+    let maxYear = null;
     function csvToObjects(csv) {
       const data = Papa.parse(csv, { header: true, skipEmptyLines: true }).data;
       return data.map(item => ({
@@ -424,10 +293,13 @@
       });
     }
     function renderCards(cardsData) {
-      cardContainer.innerHTML = '';
+      const container = document.getElementById('cardContainer');
+      container.innerHTML = '';
       cardsData.forEach(data => {
-        cardContainer.appendChild(renderCard(data));
+        container.appendChild(renderCard(data));
       });
+      updateAuthorCount(allCardsData.length);
+      updateWorksCount(calculateWorksCount(allCardsData));
     }
     function renderCard(data) {
       const card = document.createElement('div');
@@ -439,10 +311,20 @@
       card.dataset.id = data.ID;
       const worksListHTML = works => {
         const items = works.map(w => `<li>${w.year !== null ? w.title + ' (' + w.year + ')' : w.title}</li>`).join('');
-        return `<ul class="works-list" tabindex="0">${items}</ul>`;
+        return `<ul class="works-list">${items}</ul>`;
       };
-      const frontContent = `<img src="${data.ImageURL}" alt="Image of ${data.AuthorName}" loading="lazy">`;
-      const backContent = `<strong>${data.AuthorName}</strong>${worksListHTML(data.Works)}`;
+      let frontContent, backContent;
+      if (currentMode === 'author-front') {
+        frontContent = `<img src="${data.ImageURL}" alt="Image of ${data.AuthorName}">`;
+        backContent = `<strong>${data.AuthorName}</strong>${worksListHTML(data.Works)}`;
+      } else {
+        frontContent = `<strong style="margin-top: 20px; user-select:none;">Works:</strong>${worksListHTML(data.Works)}`;
+        backContent = `
+          <div class="work-front-back">
+            <img src="${data.ImageURL}" alt="Image of ${data.AuthorName}">
+            <div class="back-author-name-centered">${data.AuthorName}</div>
+          </div>`;
+      }
       card.innerHTML = `
         <div class="flip-card-inner">
           <div class="flip-card-front">${frontContent}</div>
@@ -450,24 +332,14 @@
         </div>`;
       return card;
     }
-
-    // ------------------ Load and cache ------------------
-
-    async function loadFullData() {
-      try {
-        const response = await fetch(CSV_URL);
-        if (!response.ok) throw new Error(`Network response not ok ${response.status}`);
-        const csvText = await response.text();
-        allCardsData = csvToObjects(csvText);
-        saveCardsToCache(allCardsData);
-        renderCards(allCardsData);
-        alert('Full data loaded! All cards updated.');
-      } catch (err) {
-        alert('Error loading full data: ' + err.message);
-      }
+    function updateAuthorCount(count) {
+      document.getElementById('authorCount').textContent = `Authors Registered: ${count}`;
     }
-    function saveCardsToCache(cards) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+    function calculateWorksCount(cards) {
+      return cards.reduce((acc, card) => acc + card.Works.length, 0);
+    }
+    function updateWorksCount(count) {
+      document.getElementById('worksCount').textContent = `Works Registered: ${count}`;
     }
     function loadCachedCards() {
       const data = localStorage.getItem(STORAGE_KEY);
@@ -478,9 +350,9 @@
         return [];
       }
     }
-
-    // ------------------ Reset cards ------------------
-
+    function saveCardsToCache(cards) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+    }
     function resetCards() {
       document.querySelectorAll('.flip-card').forEach(card => {
         card.classList.remove('flipped');
@@ -488,173 +360,121 @@
       });
       alert('All cards flipped to front.');
     }
-
-    // ------------------ Quiz Mode Implementation ------------------
-
-    function startQuiz() {
-      if (!allCardsData.length) {
-        alert('No card data loaded yet. Please reload data.');
-        return;
-      }
-      quizActive = true;
-      quizData = buildQuizData(allCardsData);
-      if (!quizData.length) {
-        alert('No works available in dataset for quiz.');
-        return;
-      }
-      quizIndex = 0;
-      quizAttempts = 0;
-      fuse = new Fuse(quizData, {
-        keys: ['author'],
-        threshold: 0.3,
-        ignoreLocation: true,
-        minMatchCharLength: 2,
-      });
-      toggleModes(true);
-      showQuizItem();
-    }
-
-    function exitQuiz() {
-      quizActive = false;
-      toggleModes(false);
-    }
-
-    function toggleModes(quizOn) {
-      if (quizOn) {
-        cardContainer.style.display = 'none';
-        quizContainer.hidden = false;
-        exitQuizBtn.style.display = 'inline-block';
-      } else {
-        cardContainer.style.display = '';
-        quizContainer.hidden = true;
-        exitQuizBtn.style.display = 'none';
-        clearQuizUI();
+    function populateYearDatalist() {
+      const datalist = document.getElementById('yearOptions');
+      datalist.innerHTML = '';
+      if (minYear === null || maxYear === null) return;
+      for (let year = minYear; year <= maxYear; year++) {
+        const option = document.createElement('option');
+        option.value = year;
+        datalist.appendChild(option);
       }
     }
-
-    // Prepare quiz data as flat list of {work, author}
-    function buildQuizData(cards) {
-      const quizList = [];
+    function extractYearsDetails(cards) {
+      const yearSet = new Set();
       cards.forEach(card => {
-        (card.Works || []).forEach(work => {
-          if (work.title) {
-            quizList.push({ work: work.title, author: card.AuthorName });
-          }
+        card.Works.forEach(w => {
+          if (typeof w.year === 'number' && !isNaN(w.year)) yearSet.add(w.year);
         });
       });
-      return quizList;
+      const yearsArray = Array.from(yearSet).sort((a, b) => a - b);
+      if (yearsArray.length === 0) {
+        minYear = null;
+        maxYear = null;
+      } else {
+        minYear = yearsArray[0];
+        maxYear = yearsArray[yearsArray.length - 1];
+      }
+      uniqueYears = yearsArray;
     }
-
-    function showQuizItem() {
-      quizFeedback.textContent = '';
-      quizFeedback.className = 'quiz-feedback';
-      quizHint.textContent = '';
-      quizAnswerInput.value = '';
-      quizAnswerInput.disabled = false;
-      quizSubmitBtn.disabled = false;
-      quizNextBtn.disabled = true;
-
-      const current = quizData[quizIndex];
-      quizWorkTitle.textContent = current.work;
-      updateQuizProgress();
-      quizAnswerInput.focus();
-      quizAttempts = 0;
+    function handleYearInput(id) {
+      const input = document.getElementById(id);
+      let val = input.value;
+      // Remove non-digit characters but allow typing
+      const cleaned = val.replace(/[^\d]/g, '');
+      if (val !== cleaned) {
+        const pos = input.selectionStart - (val.length - cleaned.length);
+        input.value = cleaned;
+        input.setSelectionRange(pos, pos);
+      }
     }
-
-    function checkQuizAnswer() {
-      const userAnswer = quizAnswerInput.value.trim();
-      if (!userAnswer) {
-        quizFeedback.textContent = 'Please enter an answer.';
-        quizFeedback.className = 'quiz-feedback wrong';
+    function applyYearFilter() {
+      const startYearInput = document.getElementById('startYearInput');
+      const endYearInput = document.getElementById('endYearInput');
+      let sYear = startYearInput.value.trim() === '' ? null : Number(startYearInput.value.trim());
+      let eYear = endYearInput.value.trim() === '' ? null : Number(endYearInput.value.trim());
+      if (sYear !== null && (isNaN(sYear) || sYear < minYear || sYear > maxYear)) {
+        alert(`Start year must be a number between ${minYear} and ${maxYear}`);
         return;
       }
-      const correctAuthor = quizData[quizIndex].author;
-      const results = fuse.search(userAnswer);
-      const isCorrect = results.some(r => r.item.author === correctAuthor);
-
-      if (isCorrect) {
-        quizFeedback.textContent = 'Correct! 🎉';
-        quizFeedback.className = 'quiz-feedback correct';
-        quizAnswerInput.disabled = true;
-        quizSubmitBtn.disabled = true;
-        quizNextBtn.disabled = false;
-        quizAttempts = 0;
-      } else {
-        quizAttempts++;
-        quizFeedback.textContent = 'Incorrect.';
-        quizFeedback.className = 'quiz-feedback wrong';
-        if (quizAttempts <= maxHints) {
-          quizHint.textContent = generateHint(correctAuthor, quizAttempts);
-        }
-        if (quizAttempts > maxHints) {
-          quizHint.textContent = `The correct author is: ${correctAuthor}`;
-          quizAnswerInput.disabled = true;
-          quizSubmitBtn.disabled = true;
-          quizNextBtn.disabled = false;
-        }
-      }
-    }
-
-    function generateHint(authorName, attemptNum) {
-      if (attemptNum === 1) {
-        const parts = authorName.split(' ');
-        let initials = parts.map(p => p[0]).join('.');
-        return `Hint: Author initials - ${initials}.`;
-      } else if (attemptNum === 2) {
-        const half = Math.floor(authorName.length / 2);
-        return `Hint: Author's name starts with "${authorName.substring(0, half)}"`;
-      } else {
-        return 'Last attempt! Try your best.';
-      }
-    }
-
-    function quizNext() {
-      quizIndex++;
-      if (quizIndex >= quizData.length) {
-        alert('Quiz completed! Well done.');
-        exitQuiz();
+      if (eYear !== null && (isNaN(eYear) || eYear < minYear || eYear > maxYear)) {
+        alert(`End year must be a number between ${minYear} and ${maxYear}`);
         return;
       }
-      showQuizItem();
+      if (sYear === null && eYear === null) {
+        filteredCardsData = allCardsData.slice();
+        renderCards(filteredCardsData);
+        alert('No year filter selected. Showing all cards.');
+        return;
+      }
+      if (sYear !== null && eYear === null) eYear = sYear;
+      if (sYear !== null && eYear !== null && eYear < sYear) {
+        [sYear, eYear] = [eYear, sYear];
+        startYearInput.value = sYear;
+        endYearInput.value = eYear;
+      }
+      filteredCardsData = allCardsData.filter(card =>
+        card.Works.some(w =>
+          typeof w.year === 'number' && w.year >= sYear && w.year <= eYear
+        )
+      );
+      renderCards(filteredCardsData);
+      alert(`Showing cards with works from ${sYear} to ${eYear}.`);
     }
-
-    function updateQuizProgress() {
-      quizProgress.textContent = `Work ${quizIndex + 1} of ${quizData.length}`;
+    function clearYearFilter() {
+      document.getElementById('startYearInput').value = '';
+      document.getElementById('endYearInput').value = '';
+      filteredCardsData = allCardsData.slice();
+      renderCards(filteredCardsData);
+      alert('Year filter cleared. Showing all cards.');
     }
-
-    function clearQuizUI() {
-      quizWorkTitle.textContent = '';
-      quizAnswerInput.value = '';
-      quizFeedback.textContent = '';
-      quizHint.textContent = '';
-      quizProgress.textContent = '';
+    function changeMode() {
+      const modeSelect = document.getElementById('modeToggle');
+      currentMode = modeSelect.value;
+      if (filteredCardsData.length > 0) {
+        renderCards(filteredCardsData);
+      } else {
+        renderCards(allCardsData);
+      }
     }
-
-    // ------------------ Event Listeners ------------------
-
+    async function loadFullData() {
+      try {
+        const response = await fetch(CSV_URL);
+        if (!response.ok) throw new Error(`Network response not ok ${response.status}`);
+        const csvText = await response.text();
+        allCardsData = csvToObjects(csvText);
+        saveCardsToCache(allCardsData);
+        filteredCardsData = [];
+        extractYearsDetails(allCardsData);
+        populateYearDatalist();
+        renderCards(allCardsData);
+        alert('Full data loaded! All cards updated.');
+      } catch (err) {
+        alert('Error loading full data: ' + err.message);
+      }
+    }
     document.addEventListener('DOMContentLoaded', () => {
-      const cachedCards = loadCachedCards();
-      if (cachedCards.length) {
-        allCardsData = cachedCards;
+      const cached = loadCachedCards();
+      if (cached.length > 0) {
+        allCardsData = cached;
+        filteredCardsData = [];
+        extractYearsDetails(allCardsData);
+        populateYearDatalist();
         renderCards(allCardsData);
       } else {
         loadFullData();
       }
     });
-
-    document.getElementById('quizSubmitBtn').addEventListener('click', checkQuizAnswer);
-    quizAnswerInput.addEventListener('keydown', e => {
-      if (e.key === 'Enter') {
-        checkQuizAnswer();
-      }
-    });
-    quizNextBtn.addEventListener('click', quizNext);
-    exitQuizBtn.addEventListener('click', exitQuiz);
-
-    window.resetCards = resetCards;
-    window.loadFullData = loadFullData;
-    window.startQuiz = startQuiz;
-    window.exitQuiz = exitQuiz;
   </script>
 </body>
 </html>
