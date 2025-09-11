@@ -5,53 +5,38 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Author Flashcards</title>
   <style>
-    /* Colors from your palette */
+    /* Updated colors per request */
     :root {
-      --color-1: #99c6c4; /* (153,198,196) */
-      --color-2: #5cbeb1; /* (92,190,177) */
-      --color-3: #1f9a80; /* (31,154,128) */
-      --color-4: #166851; /* (22,104,81) */
-      --color-bg: #f0f8f7;
-      --color-card-bg: #ffffff;
-      --color-text-primary: var(--color-4);
-      --color-text-secondary: var(--color-3);
-      --color-button-bg: var(--color-2);
-      --color-button-hover-bg: var(--color-3);
-      --color-button-text: #ffffff;
-      --color-card-shadow: rgba(92, 190, 177, 0.3);
-      --color-back-bg: #daf0ed;
-      --color-link: var(--color-3);
-      --color-link-hover: var(--color-4);
-      --color-border: var(--color-1);
-      --color-scrollbar-thumb: var(--color-3);
-      --color-scrollbar-track: #e0f0ef;
+      --color-terracotta: #b8483c; /* (184,72,60) */
+      --color-goldenrod: #b8a245; /* (184,162,69) */
+      --color-charcoal: #3c393e;  /* (60,57,62) */
+      --color-sage: #a6bd9e;      /* (166,189,158) */
+      --color-taupe: #9c705d;     /* (156,112,93) */
+      --background-light: #fafaf6;
+      --text-main: var(--color-charcoal);
+      --text-secondary: var(--color-taupe);
+      --button-bg: var(--color-terracotta);
+      --button-hover-bg: var(--color-goldenrod);
+      --button-text: #ffffff;
+      --card-bg: #ffffff;
+      --card-shadow-color: rgba(60, 57, 62, 0.15);
+      --flip-back-bg: var(--color-sage);
+      --link-color: var(--color-taupe);
+      --border-color: var(--color-taupe);
     }
 
-    /* Scrollbar styling for better UX */
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-    ::-webkit-scrollbar-thumb {
-      background-color: var(--color-scrollbar-thumb);
-      border-radius: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background-color: var(--color-scrollbar-track);
-      border-radius: 6px;
-    }
-
+    /* Reset base styles */
     body {
       font-family: Arial, sans-serif;
-      background: var(--color-bg);
+      background: var(--background-light);
       margin: 0;
       padding: 0;
-      color: var(--color-text-primary);
+      color: var(--text-main);
     }
     header {
       padding: 10px 20px;
-      background: var(--color-3);
-      color: var(--color-button-text);
+      background: var(--color-terracotta);
+      color: var(--button-text);
       text-align: left;
       position: relative;
       display: flex;
@@ -63,8 +48,10 @@
       font-size: 16px;
       font-weight: bold;
       user-select: none;
-      color: var(--color-button-text);
+      color: var(--button-text);
     }
+
+    /* Containers */
     .container {
       display: flex;
       flex-wrap: wrap;
@@ -72,6 +59,8 @@
       justify-content: center;
       margin: 20px;
     }
+
+    /* Flashcard Styles */
     .flip-card {
       background: transparent;
       width: 175px;
@@ -91,20 +80,20 @@
       transition: transform 0.6s;
       transform-style: preserve-3d;
       border-radius: 12px;
-      box-shadow: 2px 2px 12px var(--color-card-shadow);
-      border: 1px solid var(--color-border);
+      box-shadow: 2px 2px 12px var(--card-shadow-color);
+      border: 1px solid var(--border-color);
       box-sizing: border-box;
       overflow: visible;
       display: flex;
       flex-direction: column;
-      background: var(--color-card-bg);
+      background: var(--card-bg);
     }
     .flip-card.flipped .flip-card-inner {
       transform: rotateY(180deg);
     }
     .flip-card.expanded {
       min-height: 294px;
-      box-shadow: 0 8px 16px rgba(22,104,81,0.3);
+      box-shadow: 0 8px 16px rgba(156,112,93,0.46);
     }
     .flip-card.expanded .flip-card-inner {
       min-height: 294px;
@@ -124,7 +113,7 @@
       padding: 0;
     }
     .flip-card-front {
-      background: var(--color-card-bg);
+      background: var(--card-bg);
       justify-content: center;
       z-index: 2;
       overflow-y: auto;
@@ -141,12 +130,12 @@
       display: block;
     }
     .flip-card-back {
-      background: var(--color-back-bg);
+      background: var(--flip-back-bg);
       transform: rotateY(180deg);
       text-align: left;
       padding: 20px 24px;
       overflow-y: auto;
-      color: var(--color-text-secondary);
+      color: var(--text-main);
       justify-content: flex-start;
       position: absolute;
       top: 0;
@@ -159,7 +148,7 @@
       flex-direction: column;
       align-items: center;
       margin-top: 8px;
-      color: var(--color-text-secondary);
+      color: var(--text-main);
       font-weight: bold;
       font-size: 18px;
       user-select: none;
@@ -180,7 +169,7 @@
       font-size: 20px;
       margin-bottom: 12px;
       user-select: none;
-      color: var(--color-4);
+      color: var(--color-terracotta);
     }
     .works-list {
       padding-left: 18px;
@@ -190,49 +179,56 @@
       user-select: text;
       max-height: 180px;
       overflow-y: auto;
-      color: var(--color-4);
+      color: var(--color-taupe);
     }
     .works-list li {
       margin-bottom: 4px;
     }
+
+    /* Buttons */
     button {
       margin: 12px 8px 12px 8px;
       padding: 10px 22px;
       font-size: 16px;
       border-radius: 6px;
       border: none;
-      background: var(--color-button-bg);
-      color: var(--color-button-text);
+      background: var(--button-bg);
+      color: var(--button-text);
       cursor: pointer;
       transition: background 0.3s ease;
       user-select: none;
-      box-shadow: 0 2px 5px rgba(92,190,177,0.5);
+      box-shadow: 0 2px 5px var(--color-goldenrod);
     }
     button:hover {
-      background: var(--color-button-hover-bg);
+      background: var(--button-hover-bg);
+      color: var(--color-sage);
     }
+
+    /* Inputs */
     input[type="text"] {
       width: 80px;
       font-size: 16px;
       padding: 6px 12px;
       border-radius: 6px;
-      border: 1px solid var(--color-border);
-      background: var(--color-card-bg);
+      border: 1px solid var(--border-color);
+      background: var(--card-bg);
       margin: 12px 6px;
       user-select: text;
       box-sizing: border-box;
       cursor: text;
-      color: var(--color-text-primary);
+      color: var(--text-main);
     }
     input[type="text"]::placeholder {
-      color: var(--color-text-secondary);
+      color: var(--color-taupe);
     }
     label {
       font-weight: bold;
       margin-left: 10px;
       user-select: none;
-      color: var(--color-text-primary);
+      color: var(--text-main);
     }
+
+    /* Responsive */
     @media (max-width: 600px) {
       .flip-card {
         width: 140px;
@@ -247,7 +243,7 @@
       .flip-card-back {
         font-size: 14px;
         padding: 14px 18px;
-        color: var(--color-text-secondary);
+        color: var(--text-main);
       }
       button, input[type="text"], select {
         font-size: 14px;
@@ -267,6 +263,7 @@
         max-width: 200px;
       }
     }
+
     .controls {
       text-align: center;
       margin: 15px 0 10px 0;
