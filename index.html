@@ -295,235 +295,216 @@
     }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-</body>
-</html>
-<script>
-  const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT7cWnraaDNjm3MW4tUeVrVftj6iEBYwNkGZ7WsJsQfte3rbRhr1AF43fbIyVe1-ZMtvRVZgDrwusrT/pub?output=csv';
-  const STORAGE_KEY = 'authorFlashcardsCache';
-  let allCardsData = [];
-  let filteredCardsData = [];
-  let currentMode = 'author-front';
-  let uniqueYears = [];
-  let minYear = null;
-  let maxYear = null;
-
-  function csvToObjects(csv) {
-    const data = Papa.parse(csv, { header: true, skipEmptyLines: true }).data;
-    return data.map(item => ({
-      ID: Number(item.ID),
-      ImageURL: item.ImageURL,
-      AuthorName: item.AuthorName,
-      Works: parseWorksWithYears(item.Works)
-    }));
-  }
-
-  function parseWorksWithYears(worksStr) {
-    if (!worksStr) return [];
-    const parts = worksStr.split(';').map(s => s.trim()).filter(Boolean);
-    return parts.map(workStr => {
-      const match = workStr.match(/(.*)\s+\((\d{1,4})\)$/);
-      return match
-        ? { title: match[1].trim(), year: Number(match[2]) }
-        : { title: workStr, year: null }
-    });
-  }
-
-  function renderCards(cardsData) {
-    const container = document.getElementById('cardContainer');
-    container.innerHTML = '';
-    cardsData.forEach(data => {
-      container.appendChild(renderCard(data));
-    });
-    updateAuthorCount(allCardsData.length);
-    updateWorksCount(calculateWorksCount(allCardsData));
-  }
-
-  function renderCard(data) {
-    const card = document.createElement('div');
-    card.className = 'flip-card';
-    card.onclick = () => {
-      card.classList.toggle('flipped');
-      card.classList.toggle('expanded');
-    };
-    card.dataset.id = data.ID;
-    const worksListHTML = works => {
-      const items = works.map(w => `<li>${w.year !== null ? w.title + ' (' + w.year + ')' : w.title}</li>`).join('');
-      return `<ul class="works-list">${items}</ul>`;
-    };
-    let frontContent, backContent;
-    if (currentMode === 'author-front') {
-      frontContent = `<img src="${data.ImageURL}" alt="Image of ${data.AuthorName}">`;
-      backContent = `<strong>${data.AuthorName}</strong>${worksListHTML(data.Works)}`;
-    } else {
-      frontContent = `<strong style="margin-top: 20px; user-select:none;">Works:</strong>${worksListHTML(data.Works)}`;
-      backContent = `
-        <div class="work-front-back">
-          <img src="${data.ImageURL}" alt="Image of ${data.AuthorName}">
-          <div class="back-author-name-centered">${data.AuthorName}</div>
-        </div>`;
+  <script>
+    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT7cWnraaDNjm3MW4tUeVrVftj6iEBYwNkGZ7WsJsQfte3rbRhr1AF43fbIyVe1-ZMtvRVZgDrwusrT/pub?output=csv';
+    const STORAGE_KEY = 'authorFlashcardsCache';
+    let allCardsData = [];
+    let filteredCardsData = [];
+    let currentMode = 'author-front';
+    let uniqueYears = [];
+    let minYear = null;
+    let maxYear = null;
+    function csvToObjects(csv) {
+      const data = Papa.parse(csv, { header: true, skipEmptyLines: true }).data;
+      return data.map(item => ({
+        ID: Number(item.ID),
+        ImageURL: item.ImageURL,
+        AuthorName: item.AuthorName,
+        Works: parseWorksWithYears(item.Works)
+      }));
     }
-    card.innerHTML = `
-      <div class="flip-card-inner">
-        <div class="flip-card-front">${frontContent}</div>
-        <div class="flip-card-back">${backContent}</div>
-      </div>`;
-    return card;
-  }
-
-  function updateAuthorCount(count) {
-    document.getElementById('authorCount').textContent = `Authors Registered: ${count}`;
-  }
-
-  function calculateWorksCount(cards) {
-    return cards.reduce((acc, card) => acc + card.Works.length, 0);
-  }
-  
-  function updateWorksCount(count) {
-    document.getElementById('worksCount').textContent = `Works Registered: ${count}`;
-  }
-
-  function loadCachedCards() {
-    const data = localStorage.getItem(STORAGE_KEY);
-    if (!data) return [];
-    try {
-      return JSON.parse(data);
-    } catch {
-      return [];
-    }
-  }
-
-  function saveCardsToCache(cards) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
-  }
-
-  function resetCards() {
-    document.querySelectorAll('.flip-card').forEach(card => {
-      card.classList.remove('flipped');
-      card.classList.remove('expanded');
-    });
-    alert('All cards flipped to front.');
-  }
-
-  function populateYearDatalist() {
-    const datalist = document.getElementById('yearOptions');
-    datalist.innerHTML = '';
-    if (minYear === null || maxYear === null) return;
-    for (let year = minYear; year <= maxYear; year++) {
-      const option = document.createElement('option');
-      option.value = year;
-      datalist.appendChild(option);
-    }
-  }
-
-  function extractYearsDetails(cards) {
-    const yearSet = new Set();
-    cards.forEach(card => {
-      card.Works.forEach(w => {
-        if (typeof w.year === 'number' && !isNaN(w.year)) yearSet.add(w.year);
+    function parseWorksWithYears(worksStr) {
+      if (!worksStr) return [];
+      const parts = worksStr.split(';').map(s => s.trim()).filter(Boolean);
+      return parts.map(workStr => {
+        const match = workStr.match(/(.*)\s+\((\d{1,4})\)$/);
+        return match
+          ? { title: match[1].trim(), year: Number(match[2]) }
+          : { title: workStr, year: null }
       });
-    });
-    const yearsArray = Array.from(yearSet).sort((a, b) => a - b);
-    if (yearsArray.length === 0) {
-      minYear = null;
-      maxYear = null;
-    } else {
-      minYear = yearsArray[0];
-      maxYear = yearsArray[yearsArray.length - 1];
     }
-    uniqueYears = yearsArray;
-  }
-
-  function handleYearInput(id) {
-    const input = document.getElementById(id);
-    let val = input.value;
-    // Remove non-digit characters but allow typing
-    const cleaned = val.replace(/[^\d]/g, '');
-    if (val !== cleaned) {
-      const pos = input.selectionStart - (val.length - cleaned.length);
-      input.value = cleaned;
-      input.setSelectionRange(pos, pos);
+    function renderCards(cardsData) {
+      const container = document.getElementById('cardContainer');
+      container.innerHTML = '';
+      cardsData.forEach(data => {
+        container.appendChild(renderCard(data));
+      });
+      updateAuthorCount(allCardsData.length);
+      updateWorksCount(calculateWorksCount(allCardsData));
     }
-  }
-
-  function applyYearFilter() {
-    const startYearInput = document.getElementById('startYearInput');
-    const endYearInput = document.getElementById('endYearInput');
-    let sYear = startYearInput.value.trim() === '' ? null : Number(startYearInput.value.trim());
-    let eYear = endYearInput.value.trim() === '' ? null : Number(endYearInput.value.trim());
-    if (sYear !== null && (isNaN(sYear) || sYear < minYear || sYear > maxYear)) {
-      alert(`Start year must be a number between ${minYear} and ${maxYear}`);
-      return;
+    function renderCard(data) {
+      const card = document.createElement('div');
+      card.className = 'flip-card';
+      card.onclick = () => {
+        card.classList.toggle('flipped');
+        card.classList.toggle('expanded');
+      };
+      card.dataset.id = data.ID;
+      const worksListHTML = works => {
+        const items = works.map(w => `<li>${w.year !== null ? w.title + ' (' + w.year + ')' : w.title}</li>`).join('');
+        return `<ul class="works-list">${items}</ul>`;
+      };
+      let frontContent, backContent;
+      if (currentMode === 'author-front') {
+        frontContent = `<img src="${data.ImageURL}" alt="Image of ${data.AuthorName}">`;
+        backContent = `<strong>${data.AuthorName}</strong>${worksListHTML(data.Works)}`;
+      } else {
+        frontContent = `<strong style="margin-top: 20px; user-select:none;">Works:</strong>${worksListHTML(data.Works)}`;
+        backContent = `
+          <div class="work-front-back">
+            <img src="${data.ImageURL}" alt="Image of ${data.AuthorName}">
+            <div class="back-author-name-centered">${data.AuthorName}</div>
+          </div>`;
+      }
+      card.innerHTML = `
+        <div class="flip-card-inner">
+          <div class="flip-card-front">${frontContent}</div>
+          <div class="flip-card-back">${backContent}</div>
+        </div>`;
+      return card;
     }
-    if (eYear !== null && (isNaN(eYear) || eYear < minYear || eYear > maxYear)) {
-      alert(`End year must be a number between ${minYear} and ${maxYear}`);
-      return;
+    function updateAuthorCount(count) {
+      document.getElementById('authorCount').textContent = `Authors Registered: ${count}`;
     }
-    if (sYear === null && eYear === null) {
+    function calculateWorksCount(cards) {
+      return cards.reduce((acc, card) => acc + card.Works.length, 0);
+    }
+    function updateWorksCount(count) {
+      document.getElementById('worksCount').textContent = `Works Registered: ${count}`;
+    }
+    function loadCachedCards() {
+      const data = localStorage.getItem(STORAGE_KEY);
+      if (!data) return [];
+      try {
+        return JSON.parse(data);
+      } catch {
+        return [];
+      }
+    }
+    function saveCardsToCache(cards) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+    }
+    function resetCards() {
+      document.querySelectorAll('.flip-card').forEach(card => {
+        card.classList.remove('flipped');
+        card.classList.remove('expanded');
+      });
+      alert('All cards flipped to front.');
+    }
+    function populateYearDatalist() {
+      const datalist = document.getElementById('yearOptions');
+      datalist.innerHTML = '';
+      if (minYear === null || maxYear === null) return;
+      for (let year = minYear; year <= maxYear; year++) {
+        const option = document.createElement('option');
+        option.value = year;
+        datalist.appendChild(option);
+      }
+    }
+    function extractYearsDetails(cards) {
+      const yearSet = new Set();
+      cards.forEach(card => {
+        card.Works.forEach(w => {
+          if (typeof w.year === 'number' && !isNaN(w.year)) yearSet.add(w.year);
+        });
+      });
+      const yearsArray = Array.from(yearSet).sort((a, b) => a - b);
+      if (yearsArray.length === 0) {
+        minYear = null;
+        maxYear = null;
+      } else {
+        minYear = yearsArray[0];
+        maxYear = yearsArray[yearsArray.length - 1];
+      }
+      uniqueYears = yearsArray;
+    }
+    function handleYearInput(id) {
+      const input = document.getElementById(id);
+      let val = input.value;
+      const cleaned = val.replace(/[^\d]/g, '');
+      if (val !== cleaned) {
+        const pos = input.selectionStart - (val.length - cleaned.length);
+        input.value = cleaned;
+        input.setSelectionRange(pos, pos);
+      }
+    }
+    function applyYearFilter() {
+      const startYearInput = document.getElementById('startYearInput');
+      const endYearInput = document.getElementById('endYearInput');
+      let sYear = startYearInput.value.trim() === '' ? null : Number(startYearInput.value.trim());
+      let eYear = endYearInput.value.trim() === '' ? null : Number(endYearInput.value.trim());
+      if (sYear !== null && (isNaN(sYear) || sYear < minYear || sYear > maxYear)) {
+        alert(`Start year must be a number between ${minYear} and ${maxYear}`);
+        return;
+      }
+      if (eYear !== null && (isNaN(eYear) || eYear < minYear || eYear > maxYear)) {
+        alert(`End year must be a number between ${minYear} and ${maxYear}`);
+        return;
+      }
+      if (sYear === null && eYear === null) {
+        filteredCardsData = allCardsData.slice();
+        renderCards(filteredCardsData);
+        alert('No year filter selected. Showing all cards.');
+        return;
+      }
+      if (sYear !== null && eYear === null) eYear = sYear;
+      if (sYear !== null && eYear !== null && eYear < sYear) {
+        [sYear, eYear] = [eYear, sYear];
+        startYearInput.value = sYear;
+        endYearInput.value = eYear;
+      }
+      filteredCardsData = allCardsData.filter(card =>
+        card.Works.some(w =>
+          typeof w.year === 'number' && w.year >= sYear && w.year <= eYear
+        )
+      );
+      renderCards(filteredCardsData);
+      alert(`Showing cards with works from ${sYear} to ${eYear}.`);
+    }
+    function clearYearFilter() {
+      document.getElementById('startYearInput').value = '';
+      document.getElementById('endYearInput').value = '';
       filteredCardsData = allCardsData.slice();
       renderCards(filteredCardsData);
-      alert('No year filter selected. Showing all cards.');
-      return;
+      alert('Year filter cleared. Showing all cards.');
     }
-    if (sYear !== null && eYear === null) eYear = sYear;
-    if (sYear !== null && eYear !== null && eYear < sYear) {
-      [sYear, eYear] = [eYear, sYear];
-      startYearInput.value = sYear;
-      endYearInput.value = eYear;
+    function changeMode() {
+      const modeSelect = document.getElementById('modeToggle');
+      currentMode = modeSelect.value;
+      if (filteredCardsData.length > 0) {
+        renderCards(filteredCardsData);
+      } else {
+        renderCards(allCardsData);
+      }
     }
-    filteredCardsData = allCardsData.filter(card =>
-      card.Works.some(w =>
-        typeof w.year === 'number' && w.year >= sYear && w.year <= eYear
-      )
-    );
-    renderCards(filteredCardsData);
-    alert(`Showing cards with works from ${sYear} to ${eYear}.`);
-  }
-
-  function clearYearFilter() {
-    document.getElementById('startYearInput').value = '';
-    document.getElementById('endYearInput').value = '';
-    filteredCardsData = allCardsData.slice();
-    renderCards(filteredCardsData);
-    alert('Year filter cleared. Showing all cards.');
-  }
-
-  function changeMode() {
-    const modeSelect = document.getElementById('modeToggle');
-    currentMode = modeSelect.value;
-    if (filteredCardsData.length > 0) {
-      renderCards(filteredCardsData);
-    } else {
-      renderCards(allCardsData);
+    async function loadFullData() {
+      try {
+        const response = await fetch(CSV_URL);
+        if (!response.ok) throw new Error(`Network response not ok ${response.status}`);
+        const csvText = await response.text();
+        allCardsData = csvToObjects(csvText);
+        saveCardsToCache(allCardsData);
+        filteredCardsData = [];
+        extractYearsDetails(allCardsData);
+        populateYearDatalist();
+        renderCards(allCardsData);
+        alert('Full data loaded! All cards updated.');
+      } catch (err) {
+        alert('Error loading full data: ' + err.message);
+      }
     }
-  }
-
-  async function loadFullData() {
-    try {
-      const response = await fetch(CSV_URL);
-      if (!response.ok) throw new Error(`Network response not ok ${response.status}`);
-      const csvText = await response.text();
-      allCardsData = csvToObjects(csvText);
-      saveCardsToCache(allCardsData);
-      filteredCardsData = [];
-      extractYearsDetails(allCardsData);
-      populateYearDatalist();
-      renderCards(allCardsData);
-      alert('Full data loaded! All cards updated.');
-    } catch (err) {
-      alert('Error loading full data: ' + err.message);
-    }
-  }
-
-  document.addEventListener('DOMContentLoaded', () => {
-    const cached = loadCachedCards();
-    if (cached.length > 0) {
-      allCardsData = cached;
-      filteredCardsData = [];
-      extractYearsDetails(allCardsData);
-      populateYearDatalist();
-      renderCards(allCardsData);
-    } else {
-      loadFullData();
-    }
-  });
-</script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const cached = loadCachedCards();
+      if (cached.length > 0) {
+        allCardsData = cached;
+        filteredCardsData = [];
+        extractYearsDetails(allCardsData);
+        populateYearDatalist();
+        renderCards(allCardsData);
+      } else {
+        loadFullData();
+      }
+    });
+  </script>
+</body>
+</html>
