@@ -228,8 +228,89 @@
       vertical-align: middle;
       user-select: none;
     }
+
+    /* === Quiz Mode styles === */
+    #quizPanel {
+      margin: 15px auto;
+      padding: 20px;
+      max-width: 460px;
+      background: #e6f3ff;
+      border-radius: 12px;
+      box-shadow: 2px 2px 12px #bbb;
+      display: none;
+      flex-direction: column;
+    }
+    #quizPanel.active {
+      display: flex;
+    }
+    #quizWorkTitle {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+      user-select: text;
+      text-align: center;
+      color: #333;
+      min-height: 70px;
+    }
+    #quizAnswerInput {
+      font-size: 18px;
+      padding: 10px 12px;
+      border-radius: 6px;
+      border: 1px solid #aaa;
+      width: 100%;
+      box-sizing: border-box;
+      user-select: text;
+      margin-bottom: 10px;
+    }
+    #quizFeedback {
+      font-weight: 700;
+      min-height: 28px;
+      margin-bottom: 10px;
+      text-align: center;
+      user-select: none;
+    }
+    #quizFeedback.correct {
+      color: #3979c2;
+    }
+    #quizFeedback.wrong {
+      color: #b8483c;
+    }
+    #quizHint {
+      font-style: italic;
+      color: #9c705d;
+      margin-bottom: 10px;
+      text-align: center;
+      user-select: none;
+    }
+    #quizProgress {
+      text-align: center;
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+      color: #3979c2;
+      user-select: none;
+    }
+    .quiz-btn {
+      background: #3979c2;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 10px 18px;
+      border-radius: 6px;
+      user-select: none;
+      transition: background 0.3s ease;
+      margin-bottom: 8px;
+    }
+    .quiz-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .quiz-btn:hover:not(:disabled) {
+      background: #295595;
+    }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.6.2/fuse.min.js" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
 </head>
 <body>
   <header>
@@ -244,6 +325,8 @@
   <div class="controls">
     <button onclick="resetCards()">Reset</button>
     <button onclick="loadFullData()">Rescan</button>
+    <button id="startQuizBtn" onclick="startQuiz()">Start Quiz Mode</button>
+    <button id="exitQuizBtn" onclick="exitQuiz()" style="display:none;">Exit Quiz Mode</button>
   </div>
   <div class="controls" aria-label="Year filtering controls">
     <label for="startYearInput">Start Year:</label>
@@ -256,7 +339,7 @@
     <button onclick="applyYearFilter()">Filter</button>
     <button onclick="clearYearFilter()">Clear Filter</button>
   </div>
-  <div class="controls" aria-label="Quiz mode toggle">
+  <div class="controls" aria-label="Show mode toggle">
     <label for="modeToggle">Show Mode:</label>
     <select id="modeToggle" onchange="changeMode()">
       <option value="author-front">Author Image Front</option>
@@ -264,15 +347,47 @@
     </select>
   </div>
   <div class="container" id="cardContainer" aria-live="polite" aria-relevant="additions removals"></div>
+
+  <!-- Quiz Panel -->
+  <section id="quizPanel" aria-label="Quiz Mode Panel" role="region" aria-live="assertive" aria-atomic="true">
+    <div id="quizWorkTitle"></div>
+    <input type="text" id="quizAnswerInput" placeholder="Type author name here" autocomplete="off" aria-label="Author name input" />
+    <button id="quizSubmitBtn" class="quiz-btn">Submit Answer</button>
+    <div id="quizFeedback"></div>
+    <div id="quizHint"></div>
+    <div id="quizProgress"></div>
+    <button id="quizNextBtn" class="quiz-btn" disabled>Next Work</button>
+  </section>
+
   <script>
     const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT7cWnraaDNjm3MW4tUeVrVftj6iEBYwNkGZ7WsJsQfte3rbRhr1AF43fbIyVe1-ZMtvRVZgDrwusrT/pub?output=csv';
     const STORAGE_KEY = 'authorFlashcardsCache';
+
     let allCardsData = [];
     let filteredCardsData = [];
     let currentMode = 'author-front';
-    let uniqueYears = [];
-    let minYear = null;
-    let maxYear = null;
+
+    // Quiz mode variables
+    let quizData = [];
+    let quizIndex = 0;
+    let quizAttempts = 0;
+    const maxHints = 3;
+    let fuse;
+    let quizActive = false;
+
+    const cardContainer = document.getElementById('cardContainer');
+    const startQuizBtn = document.getElementById('startQuizBtn');
+    const exitQuizBtn = document.getElementById('exitQuizBtn');
+    const quizPanel = document.getElementById('quizPanel');
+    const quizWorkTitle = document.getElementById('quizWorkTitle');
+    const quizAnswerInput = document.getElementById('quizAnswerInput');
+    const quizSubmitBtn = document.getElementById('quizSubmitBtn');
+    const quizFeedback = document.getElementById('quizFeedback');
+    const quizHint = document.getElementById('quizHint');
+    const quizProgress = document.getElementById('quizProgress');
+    const quizNextBtn = document.getElementById('quizNextBtn');
+
+    // ====== Existing flashcard functions ======
     function csvToObjects(csv) {
       const data = Papa.parse(csv, { header: true, skipEmptyLines: true }).data;
       return data.map(item => ({
@@ -293,13 +408,12 @@
       });
     }
     function renderCards(cardsData) {
-      const container = document.getElementById('cardContainer');
-      container.innerHTML = '';
+      cardContainer.innerHTML = '';
       cardsData.forEach(data => {
-        container.appendChild(renderCard(data));
+        cardContainer.appendChild(renderCard(data));
       });
       updateAuthorCount(allCardsData.length);
-      updateWorksCount(calculateWorksCount(allCardsData));
+      updateWorksCount(calculateWorksCount(cardsData));
     }
     function renderCard(data) {
       const card = document.createElement('div');
@@ -390,7 +504,6 @@
     function handleYearInput(id) {
       const input = document.getElementById(id);
       let val = input.value;
-      // Remove non-digit characters but allow typing
       const cleaned = val.replace(/[^\d]/g, '');
       if (val !== cleaned) {
         const pos = input.selectionStart - (val.length - cleaned.length);
@@ -447,6 +560,7 @@
         renderCards(allCardsData);
       }
     }
+
     async function loadFullData() {
       try {
         const response = await fetch(CSV_URL);
@@ -463,6 +577,183 @@
         alert('Error loading full data: ' + err.message);
       }
     }
+
+    // ===== QUIZ MODE IMPLEMENTATION =====
+
+    // Elements
+    const startQuizBtn = document.getElementById('startQuizBtn');
+    const exitQuizBtn = document.getElementById('exitQuizBtn');
+
+    let quizData = [];
+    let quizIndex = 0;
+    let quizAttempts = 0;
+    let quizFuse;
+    let quizActive = false;
+
+    const quizPanel = document.createElement('section');
+    quizPanel.setAttribute('aria-label', 'Quiz Mode Panel');
+    quizPanel.style.display = 'none';
+    quizPanel.style.margin = '20px auto';
+    quizPanel.style.padding = '20px';
+    quizPanel.style.maxWidth = '460px';
+    quizPanel.style.background = '#e6f3ff';
+    quizPanel.style.borderRadius = '12px';
+    quizPanel.style.boxShadow = '2px 2px 12px #bbb';
+    quizPanel.style.userSelect = 'none';
+    quizPanel.innerHTML = `
+      <div id="quizWorkTitle" style="font-size:1.3rem; font-weight:bold; margin-bottom:14px; user-select:text; min-height:70px; text-align:center; color:#333;"></div>
+      <input type="text" id="quizAnswerInput" placeholder="Type author name here" autocomplete="off" aria-label="Author name input"
+        style="font-size:18px; padding:10px 12px; border-radius:6px; border:1px solid #aaa; width:100%; box-sizing:border-box; user-select:text; margin-bottom:10px;">
+      <button id="quizSubmitBtn" style="background:#3979c2; border:none; color:#fff; cursor:pointer; font-size:1rem; padding:10px 18px; border-radius:6px; user-select:none; margin-bottom:8px;">Submit Answer</button>
+      <div id="quizFeedback" style="font-weight:700; min-height:28px; margin-bottom:10px; text-align:center; user-select:none;"></div>
+      <div id="quizHint" style="font-style:italic; color:#9c705d; margin-bottom:10px; text-align:center; user-select:none;"></div>
+      <div id="quizProgress" style="text-align:center; font-size:0.9rem; margin-bottom:10px; color:#3979c2; user-select:none;"></div>
+      <button id="quizNextBtn" disabled style="background:#3979c2; color:#fff; border:none; cursor:pointer; font-size:1rem; padding:10px 18px; border-radius:6px; user-select:none;">Next Work</button>
+    `;
+    document.body.insertBefore(quizPanel, cardContainer.parentNode.nextSibling);
+
+    const quizWorkTitle = quizPanel.querySelector('#quizWorkTitle');
+    const quizAnswerInput = quizPanel.querySelector('#quizAnswerInput');
+    const quizSubmitBtn = quizPanel.querySelector('#quizSubmitBtn');
+    const quizFeedback = quizPanel.querySelector('#quizFeedback');
+    const quizHint = quizPanel.querySelector('#quizHint');
+    const quizProgress = quizPanel.querySelector('#quizProgress');
+    const quizNextBtn = quizPanel.querySelector('#quizNextBtn');
+
+    function startQuiz() {
+      if (!allCardsData.length) {
+        alert('No card data loaded yet. Please reload data.');
+        return;
+      }
+      quizActive = true;
+      quizData = buildQuizData(allCardsData);
+      if (!quizData.length) {
+        alert('No works available in dataset for quiz.');
+        return;
+      }
+      quizIndex = 0;
+      quizAttempts = 0;
+      quizFuse = new Fuse(quizData, {
+        keys: ['author'],
+        threshold: 0.3,
+        ignoreLocation: true,
+        minMatchCharLength: 2,
+      });
+      quizPanel.style.display = 'block';
+      cardContainer.style.display = 'none';
+      document.querySelector('.controls').style.display = 'none';
+      startQuizBtn.style.display = 'none';
+      exitQuizBtn.style.display = 'inline-block';
+      showQuizItem();
+      quizAnswerInput.focus();
+    }
+    function exitQuiz() {
+      quizActive = false;
+      quizPanel.style.display = 'none';
+      cardContainer.style.display = '';
+      document.querySelector('.controls').style.display = 'flex';
+      startQuizBtn.style.display = 'inline-block';
+      exitQuizBtn.style.display = 'none';
+      clearQuizUI();
+    }
+    function buildQuizData(cards) {
+      const list = [];
+      cards.forEach(card => {
+        (card.Works || []).forEach(work => {
+          if(work.title) {
+            list.push({ work: work.title, author: card.AuthorName });
+          }
+        });
+      });
+      return list;
+    }
+    function showQuizItem() {
+      quizFeedback.textContent = '';
+      quizFeedback.className = '';
+      quizHint.textContent = '';
+      quizAnswerInput.value = '';
+      quizAnswerInput.disabled = false;
+      quizSubmitBtn.disabled = false;
+      quizNextBtn.disabled = true;
+      const current = quizData[quizIndex];
+      quizWorkTitle.textContent = current.work;
+      updateQuizProgress();
+      quizAttempts = 0;
+    }
+    function checkQuizAnswer() {
+      const userAnswer = quizAnswerInput.value.trim();
+      if (!userAnswer) {
+        quizFeedback.textContent = 'Please enter an answer.';
+        quizFeedback.className = 'wrong';
+        return;
+      }
+      const correctAuthor = quizData[quizIndex].author;
+      const results = quizFuse.search(userAnswer);
+      const isCorrect = results.some(r => r.item.author === correctAuthor);
+      if (isCorrect) {
+        quizFeedback.textContent = 'Correct! 🎉';
+        quizFeedback.className = 'correct';
+        quizAnswerInput.disabled = true;
+        quizSubmitBtn.disabled = true;
+        quizNextBtn.disabled = false;
+        quizAttempts = 0;
+      } else {
+        quizAttempts++;
+        quizFeedback.textContent = 'Incorrect.';
+        quizFeedback.className = 'wrong';
+        if (quizAttempts <= maxHints) {
+          quizHint.textContent = generateHint(correctAuthor, quizAttempts);
+        }
+        if (quizAttempts > maxHints) {
+          quizHint.textContent = `The correct author is: ${correctAuthor}`;
+          quizAnswerInput.disabled = true;
+          quizSubmitBtn.disabled = true;
+          quizNextBtn.disabled = false;
+        }
+      }
+    }
+    function generateHint(authorName, attemptNum) {
+      if (attemptNum === 1) {
+        const parts = authorName.split(' ');
+        let initials = parts.map(p => p[0]).join('.');
+        return `Hint: Author initials - ${initials}.`;
+      } else if (attemptNum === 2) {
+        const half = Math.floor(authorName.length / 2);
+        return `Hint: Author's name starts with "${authorName.substring(0, half)}"`;
+      } else {
+        return 'Last attempt! Try your best.';
+      }
+    }
+    function quizNext() {
+      quizIndex++;
+      if (quizIndex >= quizData.length) {
+        alert('Quiz completed! Well done.');
+        exitQuiz();
+        return;
+      }
+      showQuizItem();
+    }
+    function updateQuizProgress() {
+      quizProgress.textContent = `Work ${quizIndex + 1} of ${quizData.length}`;
+    }
+    function clearQuizUI() {
+      quizWorkTitle.textContent = '';
+      quizAnswerInput.value = '';
+      quizFeedback.textContent = '';
+      quizHint.textContent = '';
+      quizProgress.textContent = '';
+    }
+
+    // Event Listeners for Quiz
+    quizSubmitBtn.addEventListener('click', checkQuizAnswer);
+    quizNextBtn.addEventListener('click', quizNext);
+    quizAnswerInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        checkQuizAnswer();
+      }
+    });
+
+    // Existing DOMContentLoaded and data load
     document.addEventListener('DOMContentLoaded', () => {
       const cached = loadCachedCards();
       if (cached.length > 0) {
