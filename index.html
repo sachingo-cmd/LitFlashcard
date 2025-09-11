@@ -5,16 +5,53 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Author Flashcards</title>
   <style>
+    /* Colors from your palette */
+    :root {
+      --color-1: #99c6c4; /* (153,198,196) */
+      --color-2: #5cbeb1; /* (92,190,177) */
+      --color-3: #1f9a80; /* (31,154,128) */
+      --color-4: #166851; /* (22,104,81) */
+      --color-bg: #f0f8f7;
+      --color-card-bg: #ffffff;
+      --color-text-primary: var(--color-4);
+      --color-text-secondary: var(--color-3);
+      --color-button-bg: var(--color-2);
+      --color-button-hover-bg: var(--color-3);
+      --color-button-text: #ffffff;
+      --color-card-shadow: rgba(92, 190, 177, 0.3);
+      --color-back-bg: #daf0ed;
+      --color-link: var(--color-3);
+      --color-link-hover: var(--color-4);
+      --color-border: var(--color-1);
+      --color-scrollbar-thumb: var(--color-3);
+      --color-scrollbar-track: #e0f0ef;
+    }
+
+    /* Scrollbar styling for better UX */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background-color: var(--color-scrollbar-thumb);
+      border-radius: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background-color: var(--color-scrollbar-track);
+      border-radius: 6px;
+    }
+
     body {
       font-family: Arial, sans-serif;
-      background: #f0f0f0;
+      background: var(--color-bg);
       margin: 0;
       padding: 0;
+      color: var(--color-text-primary);
     }
     header {
       padding: 10px 20px;
-      background: #3979c2;
-      color: white;
+      background: var(--color-3);
+      color: var(--color-button-text);
       text-align: left;
       position: relative;
       display: flex;
@@ -26,6 +63,7 @@
       font-size: 16px;
       font-weight: bold;
       user-select: none;
+      color: var(--color-button-text);
     }
     .container {
       display: flex;
@@ -44,6 +82,7 @@
       margin-bottom: 16px;
       display: flex;
       flex-direction: column;
+      user-select: none;
     }
     .flip-card-inner {
       position: relative;
@@ -52,20 +91,20 @@
       transition: transform 0.6s;
       transform-style: preserve-3d;
       border-radius: 12px;
-      box-shadow: 2px 2px 12px #bbb;
-      border: 1px solid #aaa;
+      box-shadow: 2px 2px 12px var(--color-card-shadow);
+      border: 1px solid var(--color-border);
       box-sizing: border-box;
       overflow: visible;
       display: flex;
       flex-direction: column;
-      background: #fff;
+      background: var(--color-card-bg);
     }
     .flip-card.flipped .flip-card-inner {
       transform: rotateY(180deg);
     }
     .flip-card.expanded {
       min-height: 294px;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 8px 16px rgba(22,104,81,0.3);
     }
     .flip-card.expanded .flip-card-inner {
       min-height: 294px;
@@ -85,7 +124,7 @@
       padding: 0;
     }
     .flip-card-front {
-      background: #fff;
+      background: var(--color-card-bg);
       justify-content: center;
       z-index: 2;
       overflow-y: auto;
@@ -102,12 +141,12 @@
       display: block;
     }
     .flip-card-back {
-      background: #e6f3ff;
+      background: var(--color-back-bg);
       transform: rotateY(180deg);
       text-align: left;
       padding: 20px 24px;
       overflow-y: auto;
-      color: #333;
+      color: var(--color-text-secondary);
       justify-content: flex-start;
       position: absolute;
       top: 0;
@@ -120,7 +159,7 @@
       flex-direction: column;
       align-items: center;
       margin-top: 8px;
-      color: #333;
+      color: var(--color-text-secondary);
       font-weight: bold;
       font-size: 18px;
       user-select: none;
@@ -141,6 +180,7 @@
       font-size: 20px;
       margin-bottom: 12px;
       user-select: none;
+      color: var(--color-4);
     }
     .works-list {
       padding-left: 18px;
@@ -150,6 +190,7 @@
       user-select: text;
       max-height: 180px;
       overflow-y: auto;
+      color: var(--color-4);
     }
     .works-list li {
       margin-bottom: 4px;
@@ -160,31 +201,37 @@
       font-size: 16px;
       border-radius: 6px;
       border: none;
-      background: #3979c2;
-      color: #fff;
+      background: var(--color-button-bg);
+      color: var(--color-button-text);
       cursor: pointer;
       transition: background 0.3s ease;
       user-select: none;
+      box-shadow: 0 2px 5px rgba(92,190,177,0.5);
     }
     button:hover {
-      background: #295595;
+      background: var(--color-button-hover-bg);
     }
     input[type="text"] {
       width: 80px;
       font-size: 16px;
       padding: 6px 12px;
       border-radius: 6px;
-      border: 1px solid #aaa;
-      background: white;
+      border: 1px solid var(--color-border);
+      background: var(--color-card-bg);
       margin: 12px 6px;
       user-select: text;
       box-sizing: border-box;
       cursor: text;
+      color: var(--color-text-primary);
+    }
+    input[type="text"]::placeholder {
+      color: var(--color-text-secondary);
     }
     label {
       font-weight: bold;
       margin-left: 10px;
       user-select: none;
+      color: var(--color-text-primary);
     }
     @media (max-width: 600px) {
       .flip-card {
@@ -200,6 +247,7 @@
       .flip-card-back {
         font-size: 14px;
         padding: 14px 18px;
+        color: var(--color-text-secondary);
       }
       button, input[type="text"], select {
         font-size: 14px;
